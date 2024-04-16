@@ -1,5 +1,7 @@
 import gradio as gr
 
+from llm import get_problem
+
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
     with gr.Tab("Coding"):
@@ -20,12 +22,15 @@ with gr.Blocks() as demo:
             with gr.Row() as content:
                 with gr.Column(scale=2):
                     code = gr.Code(label="Solution", language="python", lines=20)
-                    message = gr.Textbox(label="text", lines=1)
+                    message = gr.Textbox(label="Message", lines=1)
                     answer_btn = gr.Button("Send message")
                 with gr.Column(scale=1):
                     chat = gr.Chatbot(label="Chat history")
                     end_btn = gr.Button("Finish the interview")
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
+
+    start_btn.click(fn=get_problem, inputs=requirements, outputs=[description, chat_history], scroll_to_output=True)
+
 
 demo.launch()
