@@ -5,6 +5,9 @@ from options import languages_list, models, topics_list
 
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
+    # TODO: add instructions tab
+    # TODO: add other types of interviews (e.g. system design, ML design, behavioral, etc.)
+
     with gr.Tab("Coding"):
         chat_history = gr.State([])
         previous_code = gr.State("")
@@ -31,8 +34,9 @@ with gr.Blocks() as demo:
                     start_btn = gr.Button("Start")
 
             # TODO: select LLM model
-        with gr.Accordion("Solution", open=True) as solution_acc:
+        with gr.Accordion("Problem statement", open=True) as problem_acc:
             description = gr.Markdown()
+        with gr.Accordion("Solution", open=True) as solution_acc:
             with gr.Row() as content:
                 with gr.Column(scale=2):
                     language_select = gr.Dropdown(
@@ -40,6 +44,7 @@ with gr.Blocks() as demo:
                     )
                     code = gr.Code(label="Solution", language=language_select.value, lines=20)
                     message = gr.Textbox(label="Message", lines=1)
+                    # TODO: add voice input and output
                 with gr.Column(scale=1):
                     chat = gr.Chatbot(label="Chat history")
                     end_btn = gr.Button("Finish the interview")

@@ -52,3 +52,5 @@ topics_list = [
     "Computational Geometry",
 ]
 models = ["gpt-3.5-turbo"]
+# TODO: add more OAI models
+# TODO: add more OS models

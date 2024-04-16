@@ -6,6 +6,7 @@ from openai import OpenAI
 from prompts import coding_interviewer_prompt, grading_feedback_prompt
 
 load_dotenv()
+# TODO: don't use my key
 client = OpenAI()
 
 
