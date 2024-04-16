@@ -1,6 +1,6 @@
 import gradio as gr
 
-from llm import get_problem, send_request
+from llm import end_interview, get_problem, send_request
 
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
@@ -39,6 +39,6 @@ with gr.Blocks() as demo:
     answer_btn.click(
         fn=send_request, inputs=[code, previous_code, message, chat_history, chat], outputs=[chat_history, chat, message, previous_code]
     )
-
+    end_btn.click(fn=end_interview, inputs=chat_history, outputs=feedback)
 
 demo.launch()

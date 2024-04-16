@@ -83,3 +83,40 @@ def send_request(code, previous_code, message, chat_history, chat_display, clien
     chat_display.append([message, str(reply)])
 
     return chat_history, chat_display, "", code
+
+
+def end_interview(chat_history, client=client):
+    prompt_system = (
+        "You are ChatGPT acting as a grader of the coding round interviewer for a big-tech company. "
+        "Below you will see the transcript of interview with and candidate."
+        "Candidate will send you his current code with every message, you can ignore it if it didn't change. "
+        "Provide very detailed feedback using all the notes and full interview transcript. "
+        "Take into account all issues and mistakes made during the interview. "
+        "Provide as many details as possible including: overall feedback, all mistakes, improvement opportunities, "
+        "communication issues, missed edge cases, and any other valuable feedback. "
+        "Use examples and code snippets when necessary. "
+        "If the candidate didn't provide a solution or it was not optimal provide the correct most optimal one. "
+        "Return the results in nicely formatted markdown."
+    )
+
+    transcript = []
+    for message in chat_history[1:]:
+        if message["role"] == "assistant":
+            transcript.append(f"Interviewer: {message['content']}")
+        elif message["role"] == "user":
+            transcript.append(f"Candidate: {message['content']}")
+        else:
+            transcript.append(f"{message['role']}: {message['content']}")
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": prompt_system},
+            {"role": "user", "content": "Interview transcript:" + "\n\n".join(transcript)},
+            {"role": "user", "content": "Grade the interview based on the transcript provided and give a feedback."},
+        ],
+    )
+
+    feedback = response.choices[0].message.content.strip()
+
+    return feedback
