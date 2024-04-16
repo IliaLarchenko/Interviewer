@@ -61,3 +61,25 @@ def get_problem(requirements="", client=client):
     chat_history = init_bot(question)
 
     return question, chat_history
+
+
+def send_request(code, previous_code, message, chat_history, chat_display, client=client):
+    if code != previous_code:
+        chat_history.append({"role": "user", "content": f"My latest code: {code}"})
+    chat_history.append({"role": "user", "content": message})
+
+    response = client.chat.completions.create(model="gpt-3.5-turbo", response_format={"type": "json_object"}, messages=chat_history)
+
+    json_reply = response.choices[0].message.content.strip()
+
+    try:
+        data = json.loads(json_reply)
+        reply = data["reply_to_candidate"]
+    except json.JSONDecodeError as e:
+        print("Failed to decode JSON:", str(e))
+
+    chat_history.append({"role": "assistant", "content": json_reply})
+
+    chat_display.append([message, str(reply)])
+
+    return chat_history, chat_display, "", code

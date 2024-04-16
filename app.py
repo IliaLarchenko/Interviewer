@@ -1,6 +1,6 @@
 import gradio as gr
 
-from llm import get_problem
+from llm import get_problem, send_request
 
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
@@ -15,8 +15,13 @@ with gr.Blocks() as demo:
                     "Or keep it blank to just get a random question."
                 ),
             )
+            # TODO: select language
+            # TODO: select difficulty
+            # TODO: select topic
+            # TODO: select LLM model
             start_btn = gr.Button("Start")
         with gr.Accordion("Solution", open=True) as solution_acc:
+            # TODO: auto open close
             with gr.Accordion("Problem description", open=True) as solution_acc:
                 description = gr.Markdown()
             with gr.Row() as content:
@@ -31,6 +36,9 @@ with gr.Blocks() as demo:
             feedback = gr.Markdown()
 
     start_btn.click(fn=get_problem, inputs=requirements, outputs=[description, chat_history], scroll_to_output=True)
+    answer_btn.click(
+        fn=send_request, inputs=[code, previous_code, message, chat_history, chat], outputs=[chat_history, chat, message, previous_code]
+    )
 
 
 demo.launch()
