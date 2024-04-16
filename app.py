@@ -1,11 +1,7 @@
 import gradio as gr
 
 from llm import end_interview, get_problem, send_request
-
-languages_list = ["python", "javascript", "html", "css", "typescript", "dockerfile", "shell", "r", "sql"]  # limited by gradio for now
-topics_list = ["Arrays", "Strings", "Linked Lists"]
-models = ["gpt-3.5-turbo"]
-
+from options import languages_list, models, topics_list
 
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
