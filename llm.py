@@ -3,6 +3,7 @@ import json
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from audio import numpy_audio_to_bytes
 from prompts import coding_interviewer_prompt, grading_feedback_prompt
 
 load_dotenv()
@@ -73,9 +74,10 @@ def send_request(code, previous_code, message, chat_history, chat_display, model
     return chat_history, chat_display, "", code
 
 
-def transcribe_audio(filename, client=client):
-    with open(filename, "rb") as audio_file:
-        transcription = client.audio.transcriptions.create(model="whisper-1", file=audio_file, response_format="text")
+def transcribe_audio(audio, client=client):
+    transcription = client.audio.transcriptions.create(
+        model="whisper-1", file=("temp.wav", numpy_audio_to_bytes(audio[1]), "audio/wav"), response_format="text"
+    )
 
     return transcription
 

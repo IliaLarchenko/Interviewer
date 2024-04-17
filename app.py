@@ -13,7 +13,7 @@ def hide_settings():
     audio_input = gr.Audio(
         label="Record audio",
         sources=["microphone"],
-        type="filepath",
+        type="numpy",
         waveform_options={"show_controls": False},
         interactive=True,
         editable=False,
@@ -35,7 +35,7 @@ def hide_solution():
     audio_input = gr.Audio(
         label="Record audio",
         sources=["microphone"],
-        type="filepath",
+        type="numpy",
         waveform_options={"show_controls": False},
         interactive=False,
         editable=False,
@@ -93,7 +93,7 @@ with gr.Blocks() as demo:
                     audio_input = gr.Audio(
                         label="Record audio",
                         sources=["microphone"],
-                        type="filepath",
+                        type="numpy",
                         waveform_options={"show_controls": False},
                         interactive=False,
                         editable=False,
@@ -124,11 +124,12 @@ with gr.Blocks() as demo:
 
     audio_input.stop_recording(fn=transcribe_audio, inputs=[audio_input], outputs=[message]).then(
         fn=return_none, inputs=None, outputs=[audio_input]
-    ).then(
-        fn=send_request,
-        inputs=[code, previous_code, message, chat_history, chat, model_select],
-        outputs=[chat_history, chat, message, previous_code],
     )
+    # .then(
+    #     fn=send_request,
+    #     inputs=[code, previous_code, message, chat_history, chat, model_select],
+    #     outputs=[chat_history, chat, message, previous_code],
+    # )
 
     chat.change(fn=read_last_message, inputs=[chat], outputs=[audio_output])
 
