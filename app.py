@@ -3,6 +3,21 @@ import gradio as gr
 from llm import end_interview, get_problem, send_request
 from options import languages_list, models, topics_list
 
+
+def hide_settings():
+    init_acc = gr.Accordion("Settings", open=False)
+    start_btn = gr.Button("Generate a problem", interactive=False)
+    solution_acc = gr.Accordion("Solution", open=True)
+    return init_acc, start_btn, solution_acc
+
+
+def hide_solution():
+    solution_acc = gr.Accordion("Solution", open=False)
+    end_btn = gr.Button("Finish the interview", interactive=False)
+    problem_acc = gr.Accordion("Problem statement", open=False)
+    return solution_acc, end_btn, problem_acc
+
+
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
     # TODO: add instructions tab
@@ -31,12 +46,12 @@ with gr.Blocks() as demo:
                     requirements = gr.Textbox(
                         label="Requirements", placeholder="Specify requirements: topic, difficulty, language, etc.", lines=5
                     )
-                    start_btn = gr.Button("Start")
+                    start_btn = gr.Button("Generate a problem")
 
             # TODO: select LLM model
         with gr.Accordion("Problem statement", open=True) as problem_acc:
             description = gr.Markdown()
-        with gr.Accordion("Solution", open=True) as solution_acc:
+        with gr.Accordion("Solution", open=False) as solution_acc:
             with gr.Row() as content:
                 with gr.Column(scale=2):
                     language_select = gr.Dropdown(
@@ -56,12 +71,16 @@ with gr.Blocks() as demo:
         inputs=[requirements, difficulty_select, topic_select, model_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
-    )
+    ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn, solution_acc])
+
     message.submit(
         fn=send_request,
         inputs=[code, previous_code, message, chat_history, chat, model_select],
         outputs=[chat_history, chat, message, previous_code],
     )
-    end_btn.click(fn=end_interview, inputs=[chat_history, model_select], outputs=feedback)
+
+    end_btn.click(fn=end_interview, inputs=[chat_history, model_select], outputs=feedback).then(
+        fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc]
+    )
 
 demo.launch()
