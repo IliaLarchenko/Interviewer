@@ -68,7 +68,25 @@ def send_request(code, previous_code, message, chat_history, chat_display, model
         reply = "There was an error processing your request."
 
     chat_history.append({"role": "assistant", "content": json_reply})
-
     chat_display.append([message, str(reply)])
 
     return chat_history, chat_display, "", code
+
+
+def transcribe_audio(filename, client=client):
+    with open(filename, "rb") as audio_file:
+        transcription = client.audio.transcriptions.create(model="whisper-1", file=audio_file, response_format="text")
+
+    return transcription
+
+
+def text_to_speech(text, client=client):
+    response = client.audio.speech.create(model="tts-1", voice="alloy", input=text)
+    return response.content
+
+
+def read_last_message(chat_display):
+    last_message = chat_display[-1][1]
+
+    audio = text_to_speech(last_message)
+    return audio
