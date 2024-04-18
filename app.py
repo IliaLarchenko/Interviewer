@@ -1,7 +1,18 @@
 import gradio as gr
 
 from llm import end_interview, get_problem, read_last_message, send_request, transcribe_audio
-from options import languages_list, models, topics_list
+from options import fixed_messages, models, topics_list
+
+default_audio_params = {
+    "label": "Record answer",
+    "sources": ["microphone"],
+    "type": "numpy",
+    "waveform_options": {"show_controls": False},
+    "editable": False,
+    "container": False,
+    "show_share_button": False,
+    "min_length": 5,
+}
 
 
 def hide_settings():
@@ -9,72 +20,60 @@ def hide_settings():
     start_btn = gr.Button("Generate a problem", interactive=False)
     solution_acc = gr.Accordion("Solution", open=True)
     end_btn = gr.Button("Finish the interview", interactive=True)
-    send_btn = gr.Button("Send", interactive=True)
-    audio_input = gr.Audio(
-        label="Record audio",
-        sources=["microphone"],
-        type="numpy",
-        waveform_options={"show_controls": False},
-        interactive=True,
-        editable=False,
-    )
-    chat = [
-        (
-            None,
-            "Welcome to the interview! Please take a moment to read the problem statement. Then you can share you initial thoughts and ask any questions you may have. Good luck!",
-        )
-    ]
-    return init_acc, start_btn, solution_acc, end_btn, send_btn, audio_input, chat
+    audio_input = gr.Audio(interactive=True, **default_audio_params)
+    return init_acc, start_btn, solution_acc, end_btn, audio_input
+
+
+def add_interviewer_message(message):
+    def f(chat):
+        chat.append((None, message))
+        return chat
+
+    return f
 
 
 def hide_solution():
     solution_acc = gr.Accordion("Solution", open=False)
     end_btn = gr.Button("Finish the interview", interactive=False)
     problem_acc = gr.Accordion("Problem statement", open=False)
-    send_btn = gr.Button("Send", interactive=False)
-    audio_input = gr.Audio(
-        label="Record audio",
-        sources=["microphone"],
-        type="numpy",
-        waveform_options={"show_controls": False},
-        interactive=False,
-        editable=False,
-    )
-    return solution_acc, end_btn, problem_acc, send_btn, audio_input
-
-
-def return_none():
-    return None
+    audio_input = gr.Audio(interactive=False, **default_audio_params)
+    return solution_acc, end_btn, problem_acc, audio_input
 
 
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
-    # TODO: add instructions tab
     # TODO: add other types of interviews (e.g. system design, ML design, behavioral, etc.)
 
-    with gr.Tab("Coding"):
+    with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
         client = gr.State(None)
+        client_started = gr.State(False)
         with gr.Accordion("Settings") as init_acc:
             with gr.Row():
                 with gr.Column():
-                    gr.Markdown("Difficulty")
-                    difficulty_select = gr.Dropdown(
-                        label="Select difficulty", choices=["Easy", "Medium", "Hard"], value="Medium", container=False
-                    )
+                    gr.Markdown("##### Problem settings")
+                    with gr.Row():
+                        gr.Markdown("Difficulty")
+                        difficulty_select = gr.Dropdown(
+                            label="Select difficulty",
+                            choices=["Easy", "Medium", "Hard"],
+                            value="Medium",
+                            container=False,
+                            allow_custom_value=True,
+                        )
+                    with gr.Row():
+                        gr.Markdown("Topic (can type custom value)")
+                        topic_select = gr.Dropdown(
+                            label="Select topic", choices=topics_list, value="Arrays", container=False, allow_custom_value=True
+                        )
 
-                    gr.Markdown("Topic")
-                    topic_select = gr.Dropdown(
-                        label="Select topic", choices=topics_list, value="Arrays", container=False, allow_custom_value=True
-                    )
-
-                    gr.Markdown("Select LLM model to use")
-                    model_select = gr.Dropdown(label="Select model", choices=models, value="gpt-3.5-turbo", container=False)
-                with gr.Column():
-                    requirements = gr.Textbox(
-                        label="Requirements", placeholder="Specify requirements: topic, difficulty, language, etc.", lines=5
-                    )
+                    gr.Markdown("##### Assistant settings")
+                    with gr.Row():
+                        gr.Markdown("Select LLM model to use")
+                        model_select = gr.Dropdown(label="Select model", choices=models, value="gpt-3.5-turbo", container=False)
+                with gr.Column(scale=2):
+                    requirements = gr.Textbox(label="Requirements", placeholder="Specify additional requirements", lines=5)
                     start_btn = gr.Button("Generate a problem")
 
             # TODO: select LLM model
@@ -83,47 +82,47 @@ with gr.Blocks() as demo:
         with gr.Accordion("Solution", open=False) as solution_acc:
             with gr.Row() as content:
                 with gr.Column(scale=2):
-                    language_select = gr.Dropdown(
-                        label="Select language", choices=languages_list, value="python", container=False, interactive=True
+                    code = gr.Code(
+                        label="Please write your code here. Only Python linting is available for now.", language="python", lines=35
                     )
-                    code = gr.Code(label="Solution", language=language_select.value, lines=35)
                 with gr.Column(scale=1):
                     end_btn = gr.Button("Finish the interview", interactive=False)
-                    chat = gr.Chatbot(label="Chat history")
-                    audio_input = gr.Audio(
-                        label="Record audio",
-                        sources=["microphone"],
-                        type="numpy",
-                        waveform_options={"show_controls": False},
-                        interactive=False,
-                        editable=False,
-                    )
+                    chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
+                    audio_input = gr.Audio(interactive=False, **default_audio_params)
                     audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False)
-                    message = gr.Textbox(label="Message", lines=3)
-                    send_btn = gr.Button("Send", interactive=False)
+                    message = gr.Textbox(label="Message", lines=3, visible=False)
 
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
 
-    start_btn.click(
+    with gr.Tab("Instruction") as instruction_tab:
+        pass
+
+    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat], outputs=[chat])
+
+    start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
         fn=get_problem,
         inputs=[requirements, difficulty_select, topic_select, model_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
-    ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn, solution_acc, end_btn, send_btn, audio_input, chat])
+    ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn, solution_acc, end_btn, audio_input])
 
-    send_btn.click(
+    message.submit(
         fn=send_request,
         inputs=[code, previous_code, message, chat_history, chat, model_select],
         outputs=[chat_history, chat, message, previous_code],
     )
 
-    end_btn.click(fn=end_interview, inputs=[chat_history, model_select], outputs=feedback).then(
-        fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc, send_btn, audio_input]
-    )
+    end_btn.click(
+        fn=add_interviewer_message(fixed_messages["end"]),
+        inputs=[chat],
+        outputs=[chat],
+    ).then(
+        fn=end_interview, inputs=[chat_history, model_select], outputs=feedback
+    ).then(fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc, audio_input])
 
     audio_input.stop_recording(fn=transcribe_audio, inputs=[audio_input], outputs=[message]).then(
-        fn=return_none, inputs=None, outputs=[audio_input]
+        fn=lambda: None, inputs=None, outputs=[audio_input]
     ).then(
         fn=send_request,
         inputs=[code, previous_code, message, chat_history, chat, model_select],
@@ -132,6 +131,6 @@ with gr.Blocks() as demo:
 
     chat.change(fn=read_last_message, inputs=[chat], outputs=[audio_output])
 
-    audio_output.stop(fn=return_none, inputs=None, outputs=[audio_output])
+    audio_output.stop(fn=lambda: None, inputs=None, outputs=[audio_output])
 
-demo.launch()
+demo.launch(show_api=False)
