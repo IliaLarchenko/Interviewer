@@ -35,7 +35,6 @@ grading_feedback_prompt = (
     "\n- **Debugging Skills**: Efficiency in identifying and resolving errors."
     "\n- **Adaptability**: Ability to incorporate feedback and adjust solutions as needed."
     "\n- **Handling Ambiguity**: Approach to dealing with uncertain or incomplete requirements."
-    "\n- **Real-World Application**: Practicality and real-world applicability of the proposed solutions."
     "\nProvide comprehensive feedback, detailing overall performance, specific errors, areas for improvement, communication lapses, overlooked edge cases, and any other relevant observations. "
     "Use code examples to illustrate points where necessary. Your feedback should be critical, aiming to fail candidates who do not meet high standards while providing detailed improvement areas. "
     "Format all feedback in clear, structured markdown for readability."
