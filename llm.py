@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from audio import numpy_audio_to_bytes
-from prompts import coding_interviewer_prompt, grading_feedback_prompt
+from prompts import coding_interviewer_prompt, grading_feedback_prompt, problem_generation_prompt
 
 load_dotenv()
 # TODO: don't use my key
@@ -20,33 +20,42 @@ def init_bot(problem=""):
 
 
 def get_problem(requirements, difficulty, topic, model, client=client):
-    prompt_system = "You are ChatGPT acting as a coding round interviewer for a big-tech company. "
-    full_prompt = f"Generate a {difficulty} {topic} problem in. Follow additional requirements: {requirements}. The problem should be solvable within 30 minutes."
+    full_prompt = (
+        f"Create a {difficulty} {topic} coding problem. "
+        f"Additional requirements: {requirements}. "
+        "The problem should be clearly stated, well-formatted, and solvable within 30 minutes. "
+        "Ensure the problem varies each time to provide a wide range of challenges."
+    )
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": prompt_system},
+            {"role": "system", "content": problem_generation_prompt},
             {"role": "user", "content": full_prompt},
         ],
-        temperature=1.5,
+        temperature=1.0,  # Adjusted for a balance between creativity and coherency
     )
     question = response.choices[0].message.content.strip()
     chat_history = init_bot(question)
     return question, chat_history
 
 
-def end_interview(chat_history, model, client=client):
+def end_interview(problem_description, chat_history, model, client=client):
+    if not chat_history or len(chat_history) <= 2:
+        return "No interview content available to review."
+
     transcript = []
     for message in chat_history[1:]:
         role = message["role"]
         content = f"{role.capitalize()}: {message['content']}"
         transcript.append(content)
+
     response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": grading_feedback_prompt},
-            {"role": "user", "content": "Interview transcript:" + "\n\n".join(transcript)},
-            {"role": "user", "content": "Grade the interview based on the transcript provided and give a feedback."},
+            {"role": "user", "content": f"The original problem to solve: {problem_description}"},
+            {"role": "user", "content": "\n\n".join(transcript)},
+            {"role": "user", "content": "Grade the interview based on the transcript provided and give feedback."},
         ],
         temperature=0.5,
     )

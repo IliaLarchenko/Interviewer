@@ -11,7 +11,6 @@ default_audio_params = {
     "editable": False,
     "container": False,
     "show_share_button": False,
-    "min_length": 5,
 }
 
 
@@ -118,7 +117,7 @@ with gr.Blocks() as demo:
         inputs=[chat],
         outputs=[chat],
     ).then(
-        fn=end_interview, inputs=[chat_history, model_select], outputs=feedback
+        fn=end_interview, inputs=[description, chat_history, model_select], outputs=feedback
     ).then(fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc, audio_input])
 
     audio_input.stop_recording(fn=transcribe_audio, inputs=[audio_input], outputs=[message]).then(
