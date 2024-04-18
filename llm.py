@@ -28,6 +28,7 @@ def get_problem(requirements, difficulty, topic, model, client=client):
             {"role": "system", "content": prompt_system},
             {"role": "user", "content": full_prompt},
         ],
+        temperature=1.5,
     )
     question = response.choices[0].message.content.strip()
     chat_history = init_bot(question)
@@ -47,6 +48,7 @@ def end_interview(chat_history, model, client=client):
             {"role": "user", "content": "Interview transcript:" + "\n\n".join(transcript)},
             {"role": "user", "content": "Grade the interview based on the transcript provided and give a feedback."},
         ],
+        temperature=0.5,
     )
     feedback = response.choices[0].message.content.strip()
     return feedback
