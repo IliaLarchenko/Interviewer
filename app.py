@@ -1,3 +1,5 @@
+import os
+
 import gradio as gr
 
 from llm import end_interview, get_problem, read_last_message, send_request, speech_to_text, test_connection, text_to_speech
@@ -40,13 +42,37 @@ def hide_solution():
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("Your coding interview practice AI assistant!")
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
             with gr.Column(scale=10):
-                gr.Markdown("### Instructions")
+                gr.Markdown("# Welcome to the AI Tech Interviewer Training!")
+                gr.Markdown(
+                    """
+                This project leverages the latest AI models to simulate a realistic tech interview experience, 
+                allowing you to practice your coding interview skills in an environment that closely mimics the real thing. 
+                While it's not designed to replace a human interviewer or the essential steps of interview preparation, such as studying algorithms and practicing coding, 
+                it serves as a valuable addition to your preparation arsenal.
+                """
+                )
 
-                pass
+                if os.getenv("IS_DEMO"):
+                    gr.Markdown(
+                        """
+                    ### Demo Version Notice
+                    **This is a demo version running on limited resources, which may respond slower than usual.**
+                    It's primarily for demonstration purposes. 
+                    For optimal performance, we recommend running this application on your local machine using your own OpenAI API_KEY or local models. 
+                    See the instructions below on how to set up and run this application locally for the best experience.
+                    I also recommend to read this introduction page first.
+                    If you proceed to the interview interface right now, just click on the 'Coding' tab.
+                    """
+                    )
+
+                gr.Markdown("### Introduction")
+                gr.Markdown("### Setting Up Locally")
+                gr.Markdown("### Interview Interface Overview")
+                gr.Markdown("### Models Configuration")
+
             with gr.Column(scale=1):
                 try:
                     audio_test = text_to_speech("Handshake")
