@@ -1,19 +1,18 @@
 import json
 import os
 
+import requests
+
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from audio import numpy_audio_to_bytes
-from config import LLM_KEY_TYPE, LLM_NAME, LLM_URL, STT_KEY_TYPE, STT_NAME, STT_URL, TTS_KEY_TYPE, TTS_NAME, TTS_URL
+from config import LLM_NAME, LLM_TYPE, LLM_URL, STT_NAME, STT_TYPE, STT_URL, TTS_NAME, TTS_TYPE, TTS_URL
 from prompts import coding_interviewer_prompt, grading_feedback_prompt, problem_generation_prompt
 
 load_dotenv()
 
-client_LLM = OpenAI(base_url=LLM_URL, api_key=os.getenv(LLM_KEY_TYPE))
-print(client_LLM.base_url)
-client_STT = OpenAI(base_url=STT_URL, api_key=os.getenv(STT_KEY_TYPE))
-client_TTS = OpenAI(base_url=TTS_URL, api_key=os.getenv(TTS_KEY_TYPE))
+client_LLM = OpenAI(base_url=LLM_URL, api_key=os.getenv(f"{LLM_TYPE}_KEY"))
 
 
 def init_bot(problem=""):
@@ -73,37 +72,48 @@ def send_request(code, previous_code, message, chat_history, chat_display, clien
         chat_history.append({"role": "user", "content": f"My latest code:\n{code}"})
     chat_history.append({"role": "user", "content": message})
 
-    response = client.chat.completions.create(model=LLM_NAME, response_format={"type": "json_object"}, messages=chat_history)
+    response = client.chat.completions.create(model=LLM_NAME, messages=chat_history)
 
-    json_reply = response.choices[0].message.content.strip()
+    reply = response.choices[0].message.content.strip()
 
-    try:
-        data = json.loads(json_reply)
-        reply = data["reply_to_candidate"]
-    except json.JSONDecodeError as e:
-        print("Failed to decode JSON:", str(e))
-        reply = "There was an error processing your request."
-
-    chat_history.append({"role": "assistant", "content": json_reply})
-    chat_display.append([message, str(reply)])
+    chat_history.append({"role": "assistant", "content": reply})
+    chat_display.append([message, reply])
 
     return chat_history, chat_display, "", code
 
 
-def speech_to_text(audio, client=client_STT):
-    transcription = client.audio.transcriptions.create(
-        model=STT_NAME, file=("temp.wav", numpy_audio_to_bytes(audio[1]), "audio/wav"), response_format="text"
-    )
+def speech_to_text(audio):
+    assert STT_TYPE in ["OPENAI_API", "HF_API"]
+
+    if STT_TYPE == "OPENAI_API":
+        data = ("temp.wav", numpy_audio_to_bytes(audio[1]), "audio/wav")
+        client = OpenAI(base_url=STT_URL, api_key=os.getenv(f"{STT_TYPE}_KEY"))
+        transcription = client.audio.transcriptions.create(model=STT_NAME, file=data, response_format="text")
+    elif STT_TYPE == "HF_API":
+        headers = {"Authorization": "Bearer " + os.getenv(f"{STT_TYPE}_KEY")}
+        transcription = requests.post(STT_URL, headers=headers, data=numpy_audio_to_bytes(audio[1]))
+        transcription = transcription.json()["text"]
+
     return transcription
 
 
-def text_to_speech(text, client=client_TTS):
-    response = client.audio.speech.create(model=TTS_NAME, voice="alloy", input=text)
-    return response.content
+def text_to_speech(text):
+    assert TTS_TYPE in ["OPENAI_API", "HF_API"]
+
+    if TTS_TYPE == "OPENAI_API":
+        client = OpenAI(base_url=TTS_URL, api_key=os.getenv(f"{TTS_TYPE}_KEY"))
+        response = client.audio.speech.create(model=TTS_NAME, voice="alloy", input=text)
+    elif TTS_TYPE == "HF_API":
+        headers = {"Authorization": "Bearer " + os.getenv(f"{STT_TYPE}_KEY")}
+        response = requests.post(TTS_URL, headers=headers)
+
+    audio = response.content
+    return audio
 
 
 def read_last_message(chat_display):
     last_message = chat_display[-1][1]
-
-    audio = text_to_speech(last_message)
-    return audio
+    if last_message is not None:
+        audio = text_to_speech(last_message)
+        return audio
+    return None
