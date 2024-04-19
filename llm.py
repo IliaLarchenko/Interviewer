@@ -15,6 +15,16 @@ load_dotenv()
 client_LLM = OpenAI(base_url=LLM_URL, api_key=os.getenv(f"{LLM_TYPE}_KEY"))
 
 
+def test_connection():
+    response = client_LLM.chat.completions.create(
+        model=LLM_NAME,
+        messages=[
+            {"role": "system", "content": "Test connection"},
+        ],
+    )
+    return response.choices[0].message.content.strip()
+
+
 def init_bot(problem=""):
     chat_history = [
         {"role": "system", "content": coding_interviewer_prompt},
@@ -36,7 +46,7 @@ def get_problem(requirements, difficulty, topic, client=client_LLM):
             {"role": "system", "content": problem_generation_prompt},
             {"role": "user", "content": full_prompt},
         ],
-        temperature=1.0,  # Adjusted for a balance between creativity and coherency
+        temperature=1.0,
     )
     question = response.choices[0].message.content.strip()
     chat_history = init_bot(question)
@@ -82,16 +92,19 @@ def send_request(code, previous_code, message, chat_history, chat_display, clien
     return chat_history, chat_display, "", code
 
 
-def speech_to_text(audio):
+def speech_to_text(audio, convert_to_bytes=True):
     assert STT_TYPE in ["OPENAI_API", "HF_API"]
 
+    if convert_to_bytes:
+        audio = numpy_audio_to_bytes(audio[1])
+
     if STT_TYPE == "OPENAI_API":
-        data = ("temp.wav", numpy_audio_to_bytes(audio[1]), "audio/wav")
+        data = ("temp.wav", audio, "audio/wav")
         client = OpenAI(base_url=STT_URL, api_key=os.getenv(f"{STT_TYPE}_KEY"))
         transcription = client.audio.transcriptions.create(model=STT_NAME, file=data, response_format="text")
     elif STT_TYPE == "HF_API":
         headers = {"Authorization": "Bearer " + os.getenv(f"{STT_TYPE}_KEY")}
-        transcription = requests.post(STT_URL, headers=headers, data=numpy_audio_to_bytes(audio[1]))
+        transcription = requests.post(STT_URL, headers=headers, data=audio)
         transcription = transcription.json()["text"]
 
     return transcription

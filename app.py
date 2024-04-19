@@ -1,6 +1,6 @@
 import gradio as gr
 
-from llm import end_interview, get_problem, read_last_message, send_request, speech_to_text
+from llm import end_interview, get_problem, read_last_message, send_request, speech_to_text, test_connection, text_to_speech
 from options import fixed_messages, topics_list
 
 default_audio_params = {
@@ -42,6 +42,29 @@ def hide_solution():
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
     with gr.Tab("Instruction") as instruction_tab:
+        with gr.Row():
+            with gr.Column(scale=10):
+                gr.Markdown("### Instructions")
+
+                pass
+            with gr.Column(scale=1):
+                try:
+                    audio_test = text_to_speech("Handshake")
+                    gr.Markdown("TTS status: 🟢")
+                except:
+                    gr.Markdown("TTS status: 🔴")
+                try:
+                    text_test = speech_to_text(audio_test, False)
+                    gr.Markdown("STT status: 🟢")
+                except:
+                    gr.Markdown("STT status: 🔴")
+
+                try:
+                    test_connection()
+                    gr.Markdown("LLM status: 🟢")
+                except:
+                    gr.Markdown("LLM status: 🔴")
+
         pass
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
