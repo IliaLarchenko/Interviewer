@@ -1,14 +1,19 @@
 import json
+import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from audio import numpy_audio_to_bytes
+from config import LLM_KEY_TYPE, LLM_NAME, LLM_URL, STT_KEY_TYPE, STT_NAME, STT_URL, TTS_KEY_TYPE, TTS_NAME, TTS_URL
 from prompts import coding_interviewer_prompt, grading_feedback_prompt, problem_generation_prompt
 
 load_dotenv()
-# TODO: don't use my key
-client = OpenAI()
+
+client_LLM = OpenAI(base_url=LLM_URL, api_key=os.getenv(LLM_KEY_TYPE))
+print(client_LLM.base_url)
+client_STT = OpenAI(base_url=STT_URL, api_key=os.getenv(STT_KEY_TYPE))
+client_TTS = OpenAI(base_url=TTS_URL, api_key=os.getenv(TTS_KEY_TYPE))
 
 
 def init_bot(problem=""):
@@ -19,7 +24,7 @@ def init_bot(problem=""):
     return chat_history
 
 
-def get_problem(requirements, difficulty, topic, model, client=client):
+def get_problem(requirements, difficulty, topic, client=client_LLM):
     full_prompt = (
         f"Create a {difficulty} {topic} coding problem. "
         f"Additional requirements: {requirements}. "
@@ -27,7 +32,7 @@ def get_problem(requirements, difficulty, topic, model, client=client):
         "Ensure the problem varies each time to provide a wide range of challenges."
     )
     response = client.chat.completions.create(
-        model=model,
+        model=LLM_NAME,
         messages=[
             {"role": "system", "content": problem_generation_prompt},
             {"role": "user", "content": full_prompt},
@@ -39,7 +44,7 @@ def get_problem(requirements, difficulty, topic, model, client=client):
     return question, chat_history
 
 
-def end_interview(problem_description, chat_history, model, client=client):
+def end_interview(problem_description, chat_history, client=client_LLM):
     if not chat_history or len(chat_history) <= 2:
         return "No interview content available to review."
 
@@ -50,7 +55,7 @@ def end_interview(problem_description, chat_history, model, client=client):
         transcript.append(content)
 
     response = client.chat.completions.create(
-        model=model,
+        model=LLM_NAME,
         messages=[
             {"role": "system", "content": grading_feedback_prompt},
             {"role": "user", "content": f"The original problem to solve: {problem_description}"},
@@ -63,12 +68,12 @@ def end_interview(problem_description, chat_history, model, client=client):
     return feedback
 
 
-def send_request(code, previous_code, message, chat_history, chat_display, model, client=client):
+def send_request(code, previous_code, message, chat_history, chat_display, client=client_LLM):
     if code != previous_code:
-        chat_history.append({"role": "user", "content": f"My latest code: {code}"})
+        chat_history.append({"role": "user", "content": f"My latest code:\n{code}"})
     chat_history.append({"role": "user", "content": message})
 
-    response = client.chat.completions.create(model=model, response_format={"type": "json_object"}, messages=chat_history)
+    response = client.chat.completions.create(model=LLM_NAME, response_format={"type": "json_object"}, messages=chat_history)
 
     json_reply = response.choices[0].message.content.strip()
 
@@ -85,16 +90,15 @@ def send_request(code, previous_code, message, chat_history, chat_display, model
     return chat_history, chat_display, "", code
 
 
-def transcribe_audio(audio, client=client):
+def speech_to_text(audio, client=client_STT):
     transcription = client.audio.transcriptions.create(
-        model="whisper-1", file=("temp.wav", numpy_audio_to_bytes(audio[1]), "audio/wav"), response_format="text"
+        model=STT_NAME, file=("temp.wav", numpy_audio_to_bytes(audio[1]), "audio/wav"), response_format="text"
     )
-
     return transcription
 
 
-def text_to_speech(text, client=client):
-    response = client.audio.speech.create(model="tts-1", voice="alloy", input=text)
+def text_to_speech(text, client=client_TTS):
+    response = client.audio.speech.create(model=TTS_NAME, voice="alloy", input=text)
     return response.content
 
 

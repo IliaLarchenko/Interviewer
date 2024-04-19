@@ -1,7 +1,7 @@
 import gradio as gr
 
-from llm import end_interview, get_problem, read_last_message, send_request, transcribe_audio
-from options import fixed_messages, models, topics_list
+from llm import end_interview, get_problem, read_last_message, send_request, speech_to_text
+from options import fixed_messages, topics_list
 
 default_audio_params = {
     "label": "Record answer",
@@ -41,8 +41,8 @@ def hide_solution():
 
 with gr.Blocks() as demo:
     gr.Markdown("Your coding interview practice AI assistant!")
-    # TODO: add other types of interviews (e.g. system design, ML design, behavioral, etc.)
-
+    with gr.Tab("Instruction") as instruction_tab:
+        pass
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
@@ -66,16 +66,10 @@ with gr.Blocks() as demo:
                         topic_select = gr.Dropdown(
                             label="Select topic", choices=topics_list, value="Arrays", container=False, allow_custom_value=True
                         )
-
-                    gr.Markdown("##### Assistant settings")
-                    with gr.Row():
-                        gr.Markdown("Select LLM model to use")
-                        model_select = gr.Dropdown(label="Select model", choices=models, value="gpt-3.5-turbo", container=False)
                 with gr.Column(scale=2):
                     requirements = gr.Textbox(label="Requirements", placeholder="Specify additional requirements", lines=5)
                     start_btn = gr.Button("Generate a problem")
 
-            # TODO: select LLM model
         with gr.Accordion("Problem statement", open=True) as problem_acc:
             description = gr.Markdown()
         with gr.Accordion("Solution", open=False) as solution_acc:
@@ -94,21 +88,18 @@ with gr.Blocks() as demo:
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
 
-    with gr.Tab("Instruction") as instruction_tab:
-        pass
-
     coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat], outputs=[chat])
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
         fn=get_problem,
-        inputs=[requirements, difficulty_select, topic_select, model_select],
+        inputs=[requirements, difficulty_select, topic_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
     ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn, solution_acc, end_btn, audio_input])
 
     message.submit(
         fn=send_request,
-        inputs=[code, previous_code, message, chat_history, chat, model_select],
+        inputs=[code, previous_code, message, chat_history, chat],
         outputs=[chat_history, chat, message, previous_code],
     )
 
@@ -117,14 +108,14 @@ with gr.Blocks() as demo:
         inputs=[chat],
         outputs=[chat],
     ).then(
-        fn=end_interview, inputs=[description, chat_history, model_select], outputs=feedback
+        fn=end_interview, inputs=[description, chat_history], outputs=feedback
     ).then(fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc, audio_input])
 
-    audio_input.stop_recording(fn=transcribe_audio, inputs=[audio_input], outputs=[message]).then(
+    audio_input.stop_recording(fn=speech_to_text, inputs=[audio_input], outputs=[message]).then(
         fn=lambda: None, inputs=None, outputs=[audio_input]
     ).then(
         fn=send_request,
-        inputs=[code, previous_code, message, chat_history, chat, model_select],
+        inputs=[code, previous_code, message, chat_history, chat],
         outputs=[chat_history, chat, message, previous_code],
     )
 

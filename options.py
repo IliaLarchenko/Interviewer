@@ -20,10 +20,6 @@ topics_list = [
     "Binary Search Trees",
     "Tries",
 ]
-models = ["gpt-3.5-turbo"]
-# TODO: add more OAI models
-# TODO: add more OS models
-
 
 fixed_messages = {
     "intro": "Welcome to the coding interview! I am your AI interview assistant. For the start select the difficulty and topic of the problem you would like to solve. Then click on the 'Generate a problem' button. Good luck!",
