@@ -76,7 +76,9 @@ with gr.Blocks() as demo:
             with gr.Row() as content:
                 with gr.Column(scale=2):
                     code = gr.Code(
-                        label="Please write your code here. Only Python linting is available for now.", language="python", lines=35
+                        label="Please write your code here. Only Python syntax highlighting is available for now.",
+                        language="python",
+                        lines=35,
                     )
                 with gr.Column(scale=1):
                     end_btn = gr.Button("Finish the interview", interactive=False)
