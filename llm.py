@@ -19,7 +19,9 @@ def test_connection():
     response = client_LLM.chat.completions.create(
         model=LLM_NAME,
         messages=[
-            {"role": "system", "content": "Test connection"},
+            {"role": "system", "content": "You just help me test the connection."},
+            {"role": "user", "content": "Hi!"},
+            {"role": "user", "content": "Ping!"},
         ],
     )
     return response.choices[0].message.content.strip()
