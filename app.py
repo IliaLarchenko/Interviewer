@@ -28,10 +28,14 @@ default_audio_params = {
 def hide_settings():
     init_acc = gr.Accordion("Settings", open=False)
     start_btn = gr.Button("Generate a problem", interactive=False)
+    return init_acc, start_btn
+
+
+def show_solution():
     solution_acc = gr.Accordion("Solution", open=True)
     end_btn = gr.Button("Finish the interview", interactive=True)
     audio_input = gr.Audio(interactive=True, **default_audio_params)
-    return init_acc, start_btn, solution_acc, end_btn, audio_input
+    return solution_acc, end_btn, audio_input
 
 
 def hide_solution():
@@ -42,7 +46,11 @@ def hide_solution():
     return solution_acc, end_btn, problem_acc, audio_input
 
 
+# Interface
+
 with gr.Blocks() as demo:
+    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False)
+
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
             with gr.Column(scale=10):
@@ -81,8 +89,6 @@ with gr.Blocks() as demo:
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
-        client = gr.State(None)
-        client_started = gr.State(False)
         with gr.Accordion("Settings") as init_acc:
             with gr.Row():
                 with gr.Column():
@@ -111,7 +117,7 @@ with gr.Blocks() as demo:
             with gr.Row() as content:
                 with gr.Column(scale=2):
                     code = gr.Code(
-                        label="Please write your code here. Only Python syntax highlighting is available for now.",
+                        label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
                         language="python",
                         lines=35,
                     )
@@ -119,12 +125,12 @@ with gr.Blocks() as demo:
                     end_btn = gr.Button("Finish the interview", interactive=False)
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
                     audio_input = gr.Audio(interactive=False, **default_audio_params)
-                    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False)
                     message = gr.Textbox(label="Message", lines=3, visible=False)
 
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
 
+    # Events
     coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat], outputs=[chat])
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
@@ -132,12 +138,8 @@ with gr.Blocks() as demo:
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
-    ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn, solution_acc, end_btn, audio_input])
-
-    message.submit(
-        fn=llm.send_request,
-        inputs=[code, previous_code, message, chat_history, chat],
-        outputs=[chat_history, chat, message, previous_code],
+    ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn]).then(
+        fn=show_solution, inputs=None, outputs=[solution_acc, end_btn, audio_input]
     )
 
     end_btn.click(
