@@ -89,7 +89,7 @@ def send_request(code, previous_code, message, chat_history, chat_display, clien
     reply = response.choices[0].message.content.strip()
 
     chat_history.append({"role": "assistant", "content": reply})
-    chat_display.append([message, reply])
+    chat_display[-1][1] = reply
 
     return chat_history, chat_display, "", code
 
@@ -117,7 +117,7 @@ def text_to_speech(text):
 
     if TTS_TYPE == "OPENAI_API":
         client = OpenAI(base_url=TTS_URL, api_key=os.getenv(f"{TTS_TYPE}_KEY"))
-        response = client.audio.speech.create(model=TTS_NAME, voice="alloy", input=text)
+        response = client.audio.speech.create(model=TTS_NAME, voice="alloy", response_format="opus", input=text)
     elif TTS_TYPE == "HF_API":
         headers = {"Authorization": "Bearer " + os.getenv(f"{STT_TYPE}_KEY")}
         response = requests.post(TTS_URL, headers=headers)
@@ -127,8 +127,9 @@ def text_to_speech(text):
 
 
 def read_last_message(chat_display):
-    last_message = chat_display[-1][1]
-    if last_message is not None:
-        audio = text_to_speech(last_message)
-        return audio
+    if len(chat_display) > 0:
+        last_message = chat_display[-1][1]
+        if last_message is not None:
+            audio = text_to_speech(last_message)
+            return audio
     return None

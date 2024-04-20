@@ -2,6 +2,7 @@ import os
 
 import gradio as gr
 
+from config import LLM_NAME, STT_NAME, TTS_NAME
 from llm import end_interview, get_problem, read_last_message, send_request, speech_to_text, test_connection, text_to_speech
 from options import fixed_messages, topics_list
 
@@ -31,6 +32,11 @@ def add_interviewer_message(message):
         return chat
 
     return f
+
+
+def add_candidate_message(message, chat):
+    chat.append((message, None))
+    return chat
 
 
 def hide_solution():
@@ -76,22 +82,22 @@ with gr.Blocks() as demo:
             with gr.Column(scale=1):
                 try:
                     audio_test = text_to_speech("Handshake")
-                    gr.Markdown("TTS status: 🟢")
+                    gr.Markdown(f"TTS status: 🟢.   Model: {TTS_NAME}")
                 except:
-                    gr.Markdown("TTS status: 🔴")
+                    gr.Markdown(f"TTS status: 🔴.   Model: {TTS_NAME}")
+
                 try:
                     text_test = speech_to_text(audio_test, False)
-                    gr.Markdown("STT status: 🟢")
+                    gr.Markdown(f"STT status: 🟢.   Model: {STT_NAME}")
                 except:
-                    gr.Markdown("STT status: 🔴")
+                    gr.Markdown(f"STT status: 🔴.   Model: {STT_NAME}")
 
                 try:
                     test_connection()
-                    gr.Markdown("LLM status: 🟢")
+                    gr.Markdown(f"LLM status: 🟢.   Model: {LLM_NAME}")
                 except:
-                    gr.Markdown("LLM status: 🔴")
+                    gr.Markdown(f"LLM status: 🔴.   Model: {LLM_NAME}")
 
-        pass
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
@@ -164,7 +170,7 @@ with gr.Blocks() as demo:
 
     audio_input.stop_recording(fn=speech_to_text, inputs=[audio_input], outputs=[message]).then(
         fn=lambda: None, inputs=None, outputs=[audio_input]
-    ).then(
+    ).then(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).then(
         fn=send_request,
         inputs=[code, previous_code, message, chat_history, chat],
         outputs=[chat_history, chat, message, previous_code],
