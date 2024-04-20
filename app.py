@@ -2,9 +2,17 @@ import os
 
 import gradio as gr
 
-from config import LLM_NAME, STT_NAME, TTS_NAME
-from llm import end_interview, get_problem, read_last_message, send_request, speech_to_text, test_connection, text_to_speech
-from options import fixed_messages, topics_list
+from api.audio import STTManager, TTSManager
+from api.llm import LLMManager
+from config import config
+from docs.instruction import instruction
+from resources.data import fixed_messages, topics_list
+from resources.prompts import prompts
+from utils.ui import add_candidate_message, add_interviewer_message
+
+llm = LLMManager(config, prompts)
+tts = TTSManager(config)
+stt = STTManager(config)
 
 default_audio_params = {
     "label": "Record answer",
@@ -26,19 +34,6 @@ def hide_settings():
     return init_acc, start_btn, solution_acc, end_btn, audio_input
 
 
-def add_interviewer_message(message):
-    def f(chat):
-        chat.append((None, message))
-        return chat
-
-    return f
-
-
-def add_candidate_message(message, chat):
-    chat.append((message, None))
-    return chat
-
-
 def hide_solution():
     solution_acc = gr.Accordion("Solution", open=False)
     end_btn = gr.Button("Finish the interview", interactive=False)
@@ -52,51 +47,36 @@ with gr.Blocks() as demo:
         with gr.Row():
             with gr.Column(scale=10):
                 gr.Markdown("# Welcome to the AI Tech Interviewer Training!")
-                gr.Markdown(
-                    """
-                This project leverages the latest AI models to simulate a realistic tech interview experience, 
-                allowing you to practice your coding interview skills in an environment that closely mimics the real thing. 
-                While it's not designed to replace a human interviewer or the essential steps of interview preparation, such as studying algorithms and practicing coding, 
-                it serves as a valuable addition to your preparation arsenal.
-                """
-                )
+                gr.Markdown(instruction["intro"])
 
                 if os.getenv("IS_DEMO"):
-                    gr.Markdown(
-                        """
-                    ### Demo Version Notice
-                    **This is a demo version running on limited resources, which may respond slower than usual.**
-                    It's primarily for demonstration purposes. 
-                    For optimal performance, we recommend running this application on your local machine using your own OpenAI API_KEY or local models. 
-                    See the instructions below on how to set up and run this application locally for the best experience.
-                    I also recommend to read this introduction page first.
-                    If you proceed to the interview interface right now, just click on the 'Coding' tab.
-                    """
-                    )
+                    gr.Markdown(instruction["demo"])
 
                 gr.Markdown("### Introduction")
                 gr.Markdown("### Setting Up Locally")
                 gr.Markdown("### Interview Interface Overview")
                 gr.Markdown("### Models Configuration")
+                gr.Markdown("### Acknowledgement")
+                gr.Markdown(instruction["acknowledgements"])
 
             with gr.Column(scale=1):
                 try:
-                    audio_test = text_to_speech("Handshake")
-                    gr.Markdown(f"TTS status: 🟢.   Model: {TTS_NAME}")
+                    audio_test = tts.text_to_speech("Handshake")
+                    gr.Markdown(f"TTS status: 🟢.   Model: {config.tts.name}")
                 except:
-                    gr.Markdown(f"TTS status: 🔴.   Model: {TTS_NAME}")
+                    gr.Markdown(f"TTS status: 🔴.   Model: {config.tts.name}")
 
                 try:
-                    text_test = speech_to_text(audio_test, False)
-                    gr.Markdown(f"STT status: 🟢.   Model: {STT_NAME}")
+                    text_test = stt.speech_to_text(audio_test, False)
+                    gr.Markdown(f"STT status: 🟢.   Model: {config.stt.name}")
                 except:
-                    gr.Markdown(f"STT status: 🔴.   Model: {STT_NAME}")
+                    gr.Markdown(f"STT status: 🔴.   Model: {config.stt.name}")
 
                 try:
-                    test_connection()
-                    gr.Markdown(f"LLM status: 🟢.   Model: {LLM_NAME}")
+                    llm.test_connection()
+                    gr.Markdown(f"LLM status: 🟢.   Model: {config.llm.name}")
                 except:
-                    gr.Markdown(f"LLM status: 🔴.   Model: {LLM_NAME}")
+                    gr.Markdown(f"LLM status: 🔴.   Model: {config.llm.name}")
 
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
@@ -148,14 +128,14 @@ with gr.Blocks() as demo:
     coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat], outputs=[chat])
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
-        fn=get_problem,
+        fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
     ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn, solution_acc, end_btn, audio_input])
 
     message.submit(
-        fn=send_request,
+        fn=llm.send_request,
         inputs=[code, previous_code, message, chat_history, chat],
         outputs=[chat_history, chat, message, previous_code],
     )
@@ -165,18 +145,18 @@ with gr.Blocks() as demo:
         inputs=[chat],
         outputs=[chat],
     ).then(
-        fn=end_interview, inputs=[description, chat_history], outputs=feedback
+        fn=llm.end_interview, inputs=[description, chat_history], outputs=feedback
     ).then(fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc, audio_input])
 
-    audio_input.stop_recording(fn=speech_to_text, inputs=[audio_input], outputs=[message]).then(
+    audio_input.stop_recording(fn=stt.speech_to_text, inputs=[audio_input], outputs=[message]).then(
         fn=lambda: None, inputs=None, outputs=[audio_input]
     ).then(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).then(
-        fn=send_request,
+        fn=llm.send_request,
         inputs=[code, previous_code, message, chat_history, chat],
         outputs=[chat_history, chat, message, previous_code],
     )
 
-    chat.change(fn=read_last_message, inputs=[chat], outputs=[audio_output])
+    chat.change(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output])
 
     audio_output.stop(fn=lambda: None, inputs=None, outputs=[audio_output])
 
