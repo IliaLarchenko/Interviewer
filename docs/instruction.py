@@ -16,18 +16,21 @@ Welcome to the AI Tech Interviewer Training tool! This tool is designed to help 
 ## Key Features
 
 - **Speech-First Interface**: You can talk to the tool just like you'd talk to a real interviewer. This makes practicing for your interviews more realistic.
-- **Support for Various AI Models**: You can use different AI models with this tool, including:
+- **Various AI Models**: This tool uses 3 types of AI models:
   - **LLM (Large Language Model)**: Acts as the interviewer.
   - **Speech-to-Text and Text-to-Speech Models**: These help mimic a real conversation by converting spoken words to text and vice versa.
 - **Model Flexibility**: The tool works with many different models, including ones from OpenAI and open-source models from Hugging Face.
 - **Personal Project**: I created this tool as a fun way to experiment with AI models and to provide a helpful resource for interview practice.
 
-## Compliance and Licensing
+## Planned Updates
 
-This tool is available under the Apache 2.0 license. Please make sure to follow all license agreements and terms of service for the models and APIs you use with this tool.
+This is the first beta version of the service, and I have several updates planned to make this tool better:
 
-Check out the other sections for instructions on how to set up the tool, use the interview interface, configure models, and more.
-
+1. **More Interview Types**: I will add new interview simulations, including Systems Design, Machine Learning System Design, Math and Logic, Behavioral Interviews, and Theory Tests for various tech areas.
+2. **Streaming Mode for Models**: To make conversations smoother and more like real interviews, I'll switch to streaming mode for models. This will help with faster responses during the interviews.
+3. **Testing More Models**: I'll test more open-source models to see what other capabilities can be added to enhance the tool's performance and flexibility.
+4. **Improving the User Interface**: I plan to tweak the design and user interface to make it easier to navigate and use, ensuring a better experience for everyone.
+5. **Adaptive Difficulty Settings**: Depending on how users perform, I'll adjust the difficulty of the problems automatically to match their skill level better.
 """,
     "quick_start": """
 # Running the AI Tech Interviewer Simulator
