@@ -49,42 +49,46 @@ def hide_solution():
 # Interface
 
 with gr.Blocks() as demo:
-    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False)
+    if os.getenv("IS_DEMO"):
+        gr.Markdown(instruction["demo"])
 
+    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False)
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
-            with gr.Column(scale=10):
-                gr.Markdown("# Welcome to the AI Tech Interviewer Training!")
-                gr.Markdown(instruction["intro"])
-
-                if os.getenv("IS_DEMO"):
-                    gr.Markdown(instruction["demo"])
-
-                gr.Markdown("### Introduction")
-                gr.Markdown("### Setting Up Locally")
-                gr.Markdown("### Interview Interface Overview")
-                gr.Markdown("### Models Configuration")
-                gr.Markdown("### Acknowledgement")
-                gr.Markdown(instruction["acknowledgements"])
-
+            with gr.Column(scale=2):
+                gr.Markdown(instruction["introduction"])
             with gr.Column(scale=1):
+                space = "&nbsp;" * 10
                 try:
                     audio_test = tts.text_to_speech("Handshake")
-                    gr.Markdown(f"TTS status: 🟢.   Model: {config.tts.name}")
+                    gr.Markdown(f"TTS status: 🟢{space} {config.tts.name}")
                 except:
-                    gr.Markdown(f"TTS status: 🔴.   Model: {config.tts.name}")
+                    gr.Markdown(f"TTS status: 🔴{space} {config.tts.name}")
 
                 try:
                     text_test = stt.speech_to_text(audio_test, False)
-                    gr.Markdown(f"STT status: 🟢.   Model: {config.stt.name}")
+                    gr.Markdown(f"STT status: 🟢{space} {config.stt.name}")
                 except:
-                    gr.Markdown(f"STT status: 🔴.   Model: {config.stt.name}")
+                    gr.Markdown(f"STT status: 🔴{space} {config.stt.name}")
 
                 try:
                     llm.test_connection()
-                    gr.Markdown(f"LLM status: 🟢.   Model: {config.llm.name}")
+                    gr.Markdown(f"LLM status: 🟢{space} {config.llm.name}")
                 except:
-                    gr.Markdown(f"LLM status: 🔴.   Model: {config.llm.name}")
+                    gr.Markdown(f"LLM status: 🔴{space} {config.llm.name}")
+
+        gr.Markdown(instruction["quick_start"])
+        with gr.Row():
+            with gr.Column(scale=2):
+                gr.Markdown(instruction["interface"])
+            with gr.Column(scale=1):
+                gr.Markdown("Bot interaction area will look like this. Use Record button to record your answer.")
+                chat_example = gr.Chatbot(
+                    label="Chat", show_label=False, show_share_button=False, value=[["Candidate message", "Interviewer message"]]
+                )
+                audio_input_example = gr.Audio(interactive=True, **default_audio_params)
+        gr.Markdown(instruction["models"])
+        gr.Markdown(instruction["acknowledgements"])
 
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
