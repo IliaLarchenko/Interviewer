@@ -48,7 +48,7 @@ def hide_solution():
 
 # Interface
 
-with gr.Blocks() as demo:
+with gr.Blocks(title="AI Interviewer") as demo:
     if os.getenv("IS_DEMO"):
         gr.Markdown(instruction["demo"])
 
