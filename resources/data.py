@@ -23,7 +23,7 @@ topics_list = [
 
 fixed_messages = {
     "intro": "Nice to meet you! I'm your AI interviewer. Click 'Generate a problem' to start.",
-    "start": ("Read the problem statement, share your initial thoughts, and ask questions using the record button."),
-    "end": "Interview complete. Thank you! Feedback will follow shortly.",
+    "start": "Read the problem statement, share your initial thoughts, and ask questions using the record button.",
+    "end": "The interview is complete. Thank you! Feedback will follow shortly.",
     "error": "An error occurred. Please try again.",
 }
