@@ -2,11 +2,11 @@
 
 instruction = {
     "demo": """
-            <span style="color: red;">
-                This is a demo version with limited resources, which may respond slower than usual. 
-                It's primarily for demonstration. For optimal performance, please run it locally and use your own OpenAI key or HuggingFace model.
-                Read the introduction page, or click on the 'Coding' tab to proceed to the interview interface in demo mode.
-            </span>
+<span style="color: red;">
+    This is a demo version utilizing free API access with strict request limits. As a result, the experience may be slow, occasionally buggy, and not of the highest quality. If a model is unavailable, please wait for a minute before retrying. Persistent unavailability may indicate that the request limit has been reached, making the demo temporarily inaccessible.
+    For a significantly better experience, please run the service locally and use your own OpenAI key or HuggingFace model.
+</span>
+
                     """,
     "introduction": """
 # Welcome to the AI Tech Interviewer Simulator!

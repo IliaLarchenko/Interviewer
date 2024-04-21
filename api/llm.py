@@ -1,3 +1,5 @@
+import os
+
 from openai import OpenAI
 
 
@@ -19,8 +21,13 @@ class LLMManager:
         return response.choices[0].message.content.strip()
 
     def init_bot(self, problem=""):
+
+        system_prompt = self.prompts["coding_interviewer_prompt"]
+        if os.getenv("IS_DEMO"):
+            system_prompt += " Keep your responses very short and simple, no more than 100 words."
+
         chat_history = [
-            {"role": "system", "content": self.prompts["coding_interviewer_prompt"]},
+            {"role": "system", "content": system_prompt},
             {"role": "system", "content": f"The candidate is solving the following problem: {problem}"},
         ]
         return chat_history
@@ -32,6 +39,10 @@ class LLMManager:
             "The problem should be clearly stated, well-formatted, and solvable within 30 minutes. "
             "Ensure the problem varies each time to provide a wide range of challenges."
         )
+
+        if os.getenv("IS_DEMO"):
+            full_prompt += " Keep your response very short and simple, no more than 200 words."
+
         response = self.client.chat.completions.create(
             model=self.config.llm.name,
             messages=[
@@ -74,10 +85,14 @@ class LLMManager:
             content = f"{role.capitalize()}: {message['content']}"
             transcript.append(content)
 
+        system_prompt = self.prompts["grading_feedback_prompt"]
+        if os.getenv("IS_DEMO"):
+            system_prompt += " Keep your response very short and simple, no more than 200 words."
+
         response = self.client.chat.completions.create(
             model=self.config.llm.name,
             messages=[
-                {"role": "system", "content": self.prompts["grading_feedback_prompt"]},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"The original problem to solve: {problem_description}"},
                 {"role": "user", "content": "\n\n".join(transcript)},
                 {"role": "user", "content": "Grade the interview based on the transcript provided and give feedback."},
