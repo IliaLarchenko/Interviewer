@@ -30,70 +30,83 @@ Check out the other sections for instructions on how to set up the tool, use the
 
 """,
     "quick_start": """
-# Setting Up Locally
+# Running the AI Tech Interviewer Simulator
 
-Follow these steps to set up the AI Tech Interviewer Training tool on your local machine:
+This guide provides detailed instructions for setting up and running the AI Tech Interviewer Simulator either using Docker (recommended for simplicity) or running it locally.
 
-## Prerequisites
+## Initial Setup
 
-Before starting the setup, ensure you have Python installed on your system. You can download Python from [python.org](https://www.python.org/downloads/).
-
-## Clone the Repository
+### Clone the Repository
 
 First, clone the project repository to your local machine using the following command in your terminal:
 
 ```bash
 git clone https://huggingface.co/spaces/IliaLarchenko/interviewer
+cd interviewer
 ```
 
-## Create a Virtual Environment
+### Configure the Environment
 
-Create a virtual environment to manage the dependencies separately from your system-wide Python installations:
+Create a `.env` file from the provided example and edit it to include your OpenAI API key:
 
 ```bash
-cd interviewer
+cp .env.openai.example .env
+nano .env  # You can use any other text editor
+```
+
+Replace `OPENAI_API_KEY` in the `.env` file with your actual OpenAI API key.
+
+## Option 1: Running with Docker
+
+### Prerequisites
+
+- Ensure **Docker** and **Docker Compose** are installed on your system. Download and install them from Docker's [official site](https://www.docker.com/get-started).
+
+### Build and Run the Docker Container
+
+Build and start the Docker container using the following commands:
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+### Access the Application
+
+The application will be accessible at `http://localhost:7860`. Open this URL in your browser to start using the AI Tech Interviewer Simulator.
+
+## Option 2: Running Locally
+
+### Prerequisites
+
+- Ensure you have **Python** installed on your system. Download and install it from [python.org](https://www.python.org).
+
+### Set Up the Python Environment
+
+Create a virtual environment to isolate the package dependencies:
+
+```bash
 python -m venv venv
 source venv/bin/activate
 ```
 
-## Install Dependencies
+### Install Dependencies
 
-Install the necessary Python packages within the virtual environment:
+Install the required Python packages within the virtual environment:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Set Up Environment Variables
+### Running the Application
 
-The application uses environment variables defined in a `.env` file for configuration. Create this file by copying the provided example and update it with your own configurations:
-
-```bash
-cp .env.openai.example .env
-nano .env  # or use any other text editor to edit the .env file
-```
-
-Be sure to replace `sk-YOUR_OPENAI_API_KEY` with your actual OpenAI API key, which you can obtain from [OpenAI Platform](https://platform.openai.com/api-keys).
-
-### Additional Configuration for HuggingFace Spaces
-
-If you choose to copy the demo space on HuggingFace instead of using a local `.env` file, you will need to set up all the environment variables in the space setup.
-
-You will also need the `.env` file to use any non-OpenAI models, as described below. You can also refer to one of the example `.env` files provided in the repository for guidance.
-
-## Running the Application
-
-With the environment set up, you are now ready to run the application. Execute the following command in your terminal:
+Start the server by executing:
 
 ```bash
 python app.py
 ```
 
-This will start the server, and the application should be accessible locally. By default, it usually runs at `http://localhost:7860` but check your terminal output to confirm the exact URL.
-
-## Next Steps
-
-Now that your application is running, you can proceed to the [Interview Interface Overview](#interview-interface-overview) section to learn how to interact with the application.
+The application should now be accessible locally, typically at `http://localhost:7860`. Check your terminal output to confirm the URL.
 """,
     "interface": """
 # Interview Interface Overview
