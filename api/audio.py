@@ -37,14 +37,7 @@ class STTManager:
             if self.config.stt.type == "OPENAI_API":
                 data = ("temp.wav", audio, "audio/wav")
                 client = OpenAI(base_url=self.config.stt.url, api_key=self.config.stt.key)
-                response = client.audio.transcriptions.create(model=self.config.stt.name, file=data, response_format="text")
-                if not response.success:
-                    raise APIError(
-                        "STT Error: OpenAI API error",
-                        status_code=response.status_code,
-                        details=response.error.get("message", "No error message provided"),
-                    )
-                transcription = response.data
+                transcription = client.audio.transcriptions.create(model=self.config.stt.name, file=data, response_format="text")
             elif self.config.stt.type == "HF_API":
                 headers = {"Authorization": "Bearer " + self.config.stt.key}
                 response = requests.post(self.config.stt.url, headers=headers, data=audio)
@@ -71,12 +64,6 @@ class TTSManager:
             if self.config.tts.type == "OPENAI_API":
                 client = OpenAI(base_url=self.config.tts.url, api_key=self.config.tts.key)
                 response = client.audio.speech.create(model=self.config.tts.name, voice="alloy", response_format="opus", input=text)
-                if not response.success:
-                    raise APIError(
-                        "TTS Error: OpenAI API error",
-                        status_code=response.status_code,
-                        details=response.error.get("message", "No error message provided"),
-                    )
             elif self.config.tts.type == "HF_API":
                 headers = {"Authorization": "Bearer " + self.config.tts.key}
                 response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
