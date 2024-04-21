@@ -3,7 +3,7 @@
 instruction = {
     "demo": """
 <span style="color: red;">
-    This is a demo version utilizing free API access with strict request limits. As a result, the experience may be slow, occasionally buggy, and not of the highest quality. If a model is unavailable, please wait for a minute before retrying. Persistent unavailability may indicate that the request limit has been reached, making the demo temporarily inaccessible.
+    This is a demo version utilizing free API access with strict request limits. As a result, the experience may be slow, occasionally buggy, and not of the highest quality (e.g. robotic voice and very short problem and feedback). If a model is unavailable, please wait for a minute before retrying. Persistent unavailability may indicate that the request limit has been reached, making the demo temporarily inaccessible.
     For a significantly better experience, please run the service locally and use your own OpenAI key or HuggingFace models.
 </span>
 
