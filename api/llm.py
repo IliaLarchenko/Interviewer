@@ -10,6 +10,8 @@ class LLMManager:
         self.config = config
         self.client = OpenAI(base_url=config.llm.url, api_key=config.llm.key)
         self.prompts = prompts
+        self.is_demo = os.getenv("IS_DEMO")
+        self.demo_word_limit = os.getenv("DEMO_WORD_LIMIT")
 
     def test_connection(self):
         try:
@@ -29,8 +31,8 @@ class LLMManager:
 
     def init_bot(self, problem=""):
         system_prompt = self.prompts["coding_interviewer_prompt"]
-        if os.getenv("IS_DEMO"):
-            system_prompt += " Keep your responses very short and simple, no more than 100 words."
+        if self.is_demo:
+            system_prompt += f" Keep your responses very short and simple, no more than {self.demo_word_limit} words."
 
         return [
             {"role": "system", "content": system_prompt},
@@ -45,8 +47,8 @@ class LLMManager:
             "Ensure the problem varies each time to provide a wide range of challenges."
         )
 
-        if os.getenv("IS_DEMO"):
-            full_prompt += " Keep your response very short and simple, no more than 200 words."
+        if self.is_demo:
+            full_prompt += f" Keep your response very short and simple, no more than {self.demo_word_limit} words."
 
         try:
             response = self.client.chat.completions.create(
@@ -95,8 +97,8 @@ class LLMManager:
         transcript = [f"{message['role'].capitalize()}: {message['content']}" for message in chat_history[1:]]
 
         system_prompt = self.prompts["grading_feedback_prompt"]
-        if os.getenv("IS_DEMO"):
-            system_prompt += " Keep your response very short and simple, no more than 200 words."
+        if self.is_demo:
+            system_prompt += f" Keep your response very short and simple, no more than {self.demo_word_limit} words."
 
         try:
             response = self.client.chat.completions.create(
