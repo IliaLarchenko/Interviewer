@@ -3,45 +3,40 @@
 instruction = {
     "demo": """
 <span style="color: red;">
-    This is a demo version utilizing free API access with strict request limits. As a result, the experience may be slow, occasionally buggy, and not of the highest quality (e.g. robotic voice and very short problem and feedback). If a model is unavailable, please wait for a minute before retrying. Persistent unavailability may indicate that the request limit has been reached, making the demo temporarily inaccessible.
-    For a significantly better experience, please run the service locally and use your own OpenAI key or HuggingFace models.
+    This demo uses a free tier server and free API with strict request limits and limited capabilities for some models. For a significantly better experience, run the service locally. The demo performance is worse than of a locally running service (slow, buggy, robotic voice, too short messages, etc.). If some model is unavailable, please wait a minute before retrying. Persistent unavailability might mean that the request limit has been reached and demo is unavailable for a while. 
 </span>
-
-                    """,
+    """,
     "introduction": """
-# Welcome to the AI Tech Interviewer Simulator!
+# Welcome to the AI Mock Interviewer!
 
-Welcome to the AI Tech Interviewer Training tool! This tool is designed to help you practice for coding interviews by simulating the real interview experience. It's perfect for brushing up on your skills in a realistic setting, although it's not meant to replace actual interview preparations like studying algorithms or practicing coding problems.
+This tool is designed to help you practice coding interviews by simulating the real interview experience. Here you can brush your interview skills in a realistic setting, although it’s not intended to replace thorough preparations like studying algorithms or practicing coding problems.
 
 ## Key Features
 
-- **Speech-First Interface**: You can talk to the tool just like you'd talk to a real interviewer. This makes practicing for your interviews more realistic.
-- **Various AI Models**: This tool uses 3 types of AI models:
+- **Speech-First Interface**: Talk to the AI just like you would with a real interviewer. This makes your practice sessions feel more realistic.
+- **Various AI Models**: The tool uses three types of AI models:
   - **LLM (Large Language Model)**: Acts as the interviewer.
-  - **Speech-to-Text and Text-to-Speech Models**: These help mimic a real conversation by converting spoken words to text and vice versa.
-- **Model Flexibility**: The tool works with many different models, including ones from OpenAI and open-source models from Hugging Face.
-- **Personal Project**: I created this tool as a fun way to experiment with AI models and to provide a helpful resource for interview practice.
+  - **Speech-to-Text and Text-to-Speech Models**: These help mimic real conversations by converting spoken words to text and vice versa.
+- **Model Flexibility**: The tool works with many different models, including those from OpenAI and open-source models from Hugging Face.
 
 ## Planned Updates
 
-This is the first beta version of the service, and I have several updates planned to make this tool better:
-
-1. **More Interview Types**: I will add new interview simulations, including Systems Design, Machine Learning System Design, Math and Logic, Behavioral Interviews, and Theory Tests for various tech areas.
-2. **Streaming Mode for Models**: To make conversations smoother and more like real interviews, I'll switch to streaming mode for models. This will help with faster responses during the interviews.
-3. **Testing More Models**: I'll test more open-source models to see what other capabilities can be added to enhance the tool's performance and flexibility.
-4. **Improving the User Interface**: I plan to tweak the design and user interface to make it easier to navigate and use, ensuring a better experience for everyone.
-5. **Adaptive Difficulty Settings**: Depending on how users perform, I'll adjust the difficulty of the problems automatically to match their skill level better.
-""",
+This is just the first beta version, and I'm working on enhancing this tool. Planned updates include:
+1. **More Interview Types**: Adding simulations like Systems Design, Machine Learning System Design, Math and Logic, Behavioral Interviews, and Theory Tests.
+2. **Streaming Mode for Models**: Updating the models to provide faster responses during interviews.
+3. **Testing More Models**: Exploring additional open-source models to enhance the tool’s performance and flexibility.
+4. **Improving the User Interface**: Making it easier to navigate and use, ensuring a better experience for all users.
+    """,
     "quick_start": """
 # Running the AI Tech Interviewer Simulator
 
-This guide provides detailed instructions for setting up and running the AI Tech Interviewer Simulator either using Docker (recommended for simplicity) or running it locally.
+To get the real experience you should run the service locally and use your own API key or local model.
 
 ## Initial Setup
 
 ### Clone the Repository
 
-First, clone the project repository to your local machine using the following command in your terminal:
+First, clone the project repository to your local machine with the following commands:
 
 ```bash
 git clone https://huggingface.co/spaces/IliaLarchenko/interviewer
@@ -50,84 +45,52 @@ cd interviewer
 
 ### Configure the Environment
 
-Create a `.env` file from the provided example and edit it to include your OpenAI API key:
+Create a `.env` file from the provided Open AI example and edit it to include your OpenAI API key (learn how to get it here: https://platform.openai.com/api-keys):
 
 ```bash
 cp .env.openai.example .env
-nano .env  # You can use any other text editor
+nano .env  # You can use any text editor
 ```
 
-Replace `OPENAI_API_KEY` in the `.env` file with your actual OpenAI API key.
-
-## Option 1: Running with Docker
-
-### Prerequisites
-
-- Ensure **Docker** and **Docker Compose** are installed on your system. Download and install them from Docker's [official site](https://www.docker.com/get-started).
+If you want to use any other model, follow the instructions in Models Configuration section.
 
 ### Build and Run the Docker Container
 
-Build and start the Docker container using the following commands:
+To build and start the Docker container:
 
 ```bash
 docker-compose build
 docker-compose up
 ```
 
-### Access the Application
+The application will be accessible at `http://localhost:7860`.
 
-The application will be accessible at `http://localhost:7860`. Open this URL in your browser to start using the AI Tech Interviewer Simulator.
+### Running Locally (alternative)
 
-## Option 2: Running Locally
-
-### Prerequisites
-
-- Ensure you have **Python** installed on your system. Download and install it from [python.org](https://www.python.org).
-
-### Set Up the Python Environment
-
-Create a virtual environment to isolate the package dependencies:
+Set up a Python environment and install dependencies to run the application locally:
 
 ```bash
 python -m venv venv
 source venv/bin/activate
-```
-
-### Install Dependencies
-
-Install the required Python packages within the virtual environment:
-
-```bash
 pip install -r requirements.txt
-```
-
-### Running the Application
-
-Start the server by executing:
-
-```bash
 python app.py
 ```
 
-The application should now be accessible locally, typically at `http://localhost:7860`. Check your terminal output to confirm the URL.
-""",
+The application should now be accessible at `http://localhost:7860`.
+    """,
     "interface": """
 # Interview Interface Overview
 
-The AI Tech Interviewer Training tool currently supports different types of interviews, with only the coding interview available at this time. To begin, select the corresponding tab at the top of the interface.
-
-## Interface Components
-
-The interface is divided into four main sections, which you will navigate through sequentially:
+This tool will support different types of interviews, but currently focusing on coding interviews only. Here's how to navigate the interface:
 
 ### Setting
-In this section, you can configure the interview parameters such as difficulty, topic, and any specific requirements in a free text form. Once you've set your preferences, click the **"Generate a problem"** button to start the interview. The AI will then prepare a coding problem for you.
+Configure the interview settings such as difficulty, topic, and any specific requirements. Start the interview by clicking the **"Generate a problem"** button.
 
 ### Problem Statement
-After clicking **"Generate a problem"**, wait for less than 10 seconds, and the AI will present a coding problem in this section. Review the problem statement carefully to understand what is expected for your solution.
+The AI will present a coding problem after you initiate the session.
 
 ### Solution
-This is where the main interaction occurs:
+This section is where the interaction happens:
 - **Code Area**: On the left side, you will find a space to write your solution. You can use any programming language, although syntax highlighting is only available for Python currently.
 - **Communication Area**: On the right, this area includes:
   - **Chat History**: Displays the entire dialogue history, showing messages from both you and the AI interviewer.
@@ -135,13 +98,15 @@ This is where the main interaction occurs:
 
 Engage with the AI as you would with a real interviewer. Provide concise responses and frequent updates rather than long monologues. Your interactions, including any commentary on your code, will be recorded and the AI's responses will be read aloud and displayed in the chat. Follow the AI's instructions and respond to any follow-up questions as they arise.
 
+Once the interview is completed, or if you decide to end it early, click the **"Finish the interview"** button.
+
 ### Feedback
-Once the interview is completed, or if you decide to end it early, click the **"Finish the interview"** button. Detailed feedback will be provided in this section, helping you understand your performance and areas for improvement.
-                    """,
+Detailed feedback will be provided in this section, helping you understand your performance and areas for improvement.  
+    """,
     "models": """
 # Models Configuration
 
-The AI Tech Interviewer Training tool utilizes three types of models: a Large Language Model (LLM) for simulating interviews, a Speech-to-Text (STT) model for audio processing, and a Text-to-Speech (TTS) model for auditory feedback. You can configure each model separately to tailor the experience based on your preferences and available resources.
+This tool utilizes three types of AI models: a Large Language Model (LLM) for simulating interviews, a Speech-to-Text (STT) model for audio processing, and a Text-to-Speech (TTS) model for auditory feedback. You can configure each model separately to tailor the experience based on your preferences and available resources.
 
 ## Flexible Model Integration
 
@@ -173,70 +138,66 @@ The tool uses a `.env` file for environment configuration. Here’s a breakdown 
 
 ### Example Configuration
 
-For OpenAI models:
+OpenAI LLM:
 ```plaintext
 OPENAI_API_KEY=sk-YOUR_OPENAI_API_KEY
 LLM_URL=https://api.openai.com/v1
 LLM_TYPE=OPENAI_API
 LLM_NAME=gpt-3.5-turbo
-STT_URL=https://api.openai.com/v1
-STT_TYPE=OPENAI_API
-STT_NAME=whisper-1
-TTS_URL=https://api.openai.com/v1
-TTS_TYPE=OPENAI_API
-TTS_NAME=tts-1
 ```
 
-For a Hugging Face model integration:
+Hugging face TTS:
 ```plaintext
 HF_API_KEY=hf_YOUR_HUGGINGFACE_API_KEY
-LLM_URL=https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-70B-Instruct/v1
-LLM_TYPE=HF_API
-LLM_NAME=Meta-Llama-3-70B-Instruct
-STT_URL=https://api-inference.huggingface.co/models/openai/whisper-tiny.en
-STT_TYPE=HF_API
-STT_NAME=whisper-tiny.en
 TTS_URL=https://api-inference.huggingface.co/models/facebook/mms-tts-eng
 TTS_TYPE=HF_API
 TTS_NAME=Facebook-mms-tts-eng
 ```
 
-For local models:
+Local STT:
 ```plaintext
 HF_API_KEY=None
-LLM_URL=http://192.168.1.1:8080/v1
-LLM_TYPE=HF_API
-LLM_NAME=Meta-Llama-3-8B-Instruct
 STT_URL=http://127.0.0.1:5000/transcribe
 STT_TYPE=HF_API
 STT_NAME=whisper-base.en
-TTS_URL=http://127.0.0.1:5001/read
-TTS_TYPE=HF_API
-TTS_NAME=my-tts-model
 ```
 
-This section provides a comprehensive guide on how to configure and integrate different AI models into the tool, including handling the `.env` configuration file and adapting it to various sources.
- """,
+You can configure each models separately. Find more examples in the `.env.example` files provided.
+
+    """,
     "acknowledgements": """
 # Acknowledgements
 
-This tool is powered by Gradio, enabling me to create an easy-to-use interface for AI-based interview practice. I thank Gradio for their fantastic platform.
+The service is powered by Gradio, and the demo version is hosted on HuggingFace Spaces.
 
-## Thanks to the Model Providers
-
-While this tool can integrate various AI models, I primarily utilize and sincerely appreciate technologies provided by the following organizations:
-
+Even though the service can be used with great variety of models I want to specifially acknowledge a few of them:
 - **OpenAI**: For models like GPT-3.5, GPT-4, Whisper, and TTS-1. More details on their models and usage policies can be found at [OpenAI's website](https://www.openai.com).
-- **Meta**: For the Llama models, particularly the Meta-Llama-3-70B-Instruct and Meta-Llama-3-8B-Instruct, crucial for advanced language processing. Visit [Meta AI](https://ai.facebook.com) for more information.
+- **Meta**: For the Llama models, particularly the Meta-Llama-3-70B-Instruct, as well as Facebook-mms-tts-eng model. Visit [Meta AI](https://ai.facebook.com) for more information.
 - **HuggingFace**: For a wide range of models and APIs that greatly enhance the flexibility of this tool. For specific details on usage, refer to [Hugging Face's documentation](https://huggingface.co).
 
 Please ensure to review the specific documentation and follow the terms of service for each model and API you use, as this is crucial for responsible and compliant use of these technologies.
-
-## Other Models
-
-This tool is designed to be adaptable, allowing the integration of other models that comply with the APIs of the major providers listed. This enables the tool to be continually enhanced and tailored to specific needs.
-
-I hope this tool assists you effectively in preparing for your interviews by leveraging these advanced technologies.
-
     """,
 }
+
+if __name__ == "__main__":
+    spaces_config = """---
+title: Interviewer
+emoji: 📚
+colorFrom: pink
+colorTo: yellow
+sdk: gradio
+sdk_version: 4.27.0
+app_file: app.py
+pinned: true
+license: apache-2.0
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
+"""
+    with open("README.md", "w") as f:
+        f.write(spaces_config)
+
+        for key in ("introduction", "quick_start", "interface", "models", "acknowledgements"):
+            f.write(instruction[key])
+            f.write("\n\n")
