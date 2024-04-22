@@ -52,7 +52,8 @@ with gr.Blocks(title="AI Interviewer") as demo:
     if os.getenv("IS_DEMO"):
         gr.Markdown(instruction["demo"])
 
-    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False)
+    started_coding = gr.State(False)
+    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False, interactive=False)
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
             with gr.Column(scale=2):
@@ -135,14 +136,18 @@ with gr.Blocks(title="AI Interviewer") as demo:
             feedback = gr.Markdown()
 
     # Events
-    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat], outputs=[chat])
+    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat])
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
+        fn=lambda: True, inputs=None, outputs=[started_coding]
+    ).then(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
-    ).then(fn=hide_settings, inputs=None, outputs=[init_acc, start_btn]).then(
+    ).then(
+        fn=hide_settings, inputs=None, outputs=[init_acc, start_btn]
+    ).then(
         fn=show_solution, inputs=None, outputs=[solution_acc, end_btn, audio_input]
     )
 
@@ -162,8 +167,8 @@ with gr.Blocks(title="AI Interviewer") as demo:
         outputs=[chat_history, chat, message, previous_code],
     )
 
-    chat.change(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output])
+    chat.change(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output], trigger_mode="once")
 
-    audio_output.stop(fn=lambda: None, inputs=None, outputs=[audio_output])
+    # audio_output.stop(fn=lambda: None, inputs=None, outputs=[audio_output])
 
 demo.launch(show_api=False)
