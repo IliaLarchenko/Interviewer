@@ -91,8 +91,9 @@ class LLMManager:
         return chat_history, chat_display, "", code
 
     def end_interview(self, problem_description, chat_history):
+
         if not chat_history or len(chat_history) <= 2:
-            return "No interview content available to review."
+            yield "No interview content available to review."
 
         transcript = [f"{message['role'].capitalize()}: {message['content']}" for message in chat_history[1:]]
 
@@ -100,21 +101,34 @@ class LLMManager:
         if self.is_demo:
             system_prompt += f" Keep your response very short and simple, no more than {self.demo_word_limit} words."
 
-        try:
-            response = self.client.chat.completions.create(
-                model=self.config.llm.name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"The original problem to solve: {problem_description}"},
-                    {"role": "user", "content": "\n\n".join(transcript)},
-                    {"role": "user", "content": "Grade the interview based on the transcript provided and give feedback."},
-                ],
-                temperature=0.5,
-            )
-            if not response.choices:
-                raise APIError("LLM End Interview Error", details="No choices in response")
-            feedback = response.choices[0].message.content.strip()
-        except Exception as e:
-            raise APIError(f"LLM End Interview Error: Unexpected error: {e}")
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"The original problem to solve: {problem_description}"},
+            {"role": "user", "content": "\n\n".join(transcript)},
+            {"role": "user", "content": "Grade the interview based on the transcript provided and give feedback."},
+        ]
 
-        return feedback
+        if os.getenv("STREAMING", False):
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.config.llm.name,
+                    messages=messages,
+                    temperature=0.5,
+                    stream=True,
+                )
+            except Exception as e:
+                raise APIError(f"LLM End Interview Error: Unexpected error: {e}")
+
+            feedback = ""
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    feedback += chunk.choices[0].delta.content
+                yield feedback
+        #     else:
+        #         response = self.client.chat.completions.create(
+        #             model=self.config.llm.name,
+        #             messages=messages,
+        #             temperature=0.5,
+        #         )
+        #         feedback = response.choices[0].message.content.strip()
+        #         return feedback

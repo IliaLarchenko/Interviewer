@@ -139,16 +139,16 @@ with gr.Blocks(title="AI Interviewer") as demo:
     coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat])
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
-        fn=lambda: True, inputs=None, outputs=[started_coding]
+        fn=lambda: True, outputs=[started_coding]
     ).then(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
     ).then(
-        fn=hide_settings, inputs=None, outputs=[init_acc, start_btn]
+        fn=hide_settings, outputs=[init_acc, start_btn]
     ).then(
-        fn=show_solution, inputs=None, outputs=[solution_acc, end_btn, audio_input]
+        fn=show_solution, outputs=[solution_acc, end_btn, audio_input]
     )
 
     end_btn.click(
@@ -156,11 +156,11 @@ with gr.Blocks(title="AI Interviewer") as demo:
         inputs=[chat],
         outputs=[chat],
     ).then(
-        fn=llm.end_interview, inputs=[description, chat_history], outputs=feedback
-    ).then(fn=hide_solution, inputs=None, outputs=[solution_acc, end_btn, problem_acc, audio_input])
+        fn=hide_solution, outputs=[solution_acc, end_btn, problem_acc, audio_input]
+    ).then(fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback])
 
     audio_input.stop_recording(fn=stt.speech_to_text, inputs=[audio_input], outputs=[message]).then(
-        fn=lambda: None, inputs=None, outputs=[audio_input]
+        fn=lambda: None, outputs=[audio_input]
     ).then(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).then(
         fn=llm.send_request,
         inputs=[code, previous_code, message, chat_history, chat],
