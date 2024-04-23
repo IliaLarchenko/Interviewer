@@ -1,4 +1,5 @@
 import io
+import os
 import wave
 
 import requests
@@ -59,27 +60,41 @@ class TTSManager:
     def __init__(self, config):
         self.config = config
 
-    def text_to_speech(self, text):
-        try:
-            if self.config.tts.type == "OPENAI_API":
-                client = OpenAI(base_url=self.config.tts.url, api_key=self.config.tts.key)
-                response = client.audio.speech.create(model=self.config.tts.name, voice="alloy", response_format="opus", input=text)
-            elif self.config.tts.type == "HF_API":
-                headers = {"Authorization": "Bearer " + self.config.tts.key}
-                response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
-                if response.status_code != 200:
-                    error_details = response.json().get("error", "No error message provided")
-                    raise APIError("TTS Error: HF API error", status_code=response.status_code, details=error_details)
-        except APIError as e:
-            raise
-        except Exception as e:
-            raise APIError(f"TTS Error: Unexpected error: {e}")
-
-        return response.content
-
     def read_last_message(self, chat_display):
         if chat_display:
-            last_message = chat_display[-1][1]
-            if last_message is not None:
-                return self.text_to_speech(last_message)
-        return None
+            text = chat_display[-1][1]
+
+            headers = {"Authorization": "Bearer " + self.config.tts.key}
+            try:
+                if self.config.tts.type == "OPENAI_API":
+                    data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
+
+                    if os.environ.get("STREAMING", False):
+                        with requests.post(self.config.tts.url, headers=headers, json=data, stream=True) as response:
+                            if response.status_code != 200:
+                                error_details = response.json().get("error", "No error message provided")
+                                raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
+                            else:
+                                yield from response.iter_content(chunk_size=1024)
+                    else:
+                        response = requests.post(self.config.tts.url, headers=headers, json=data)
+                        if response.status_code != 200:
+                            error_details = response.json().get("error", "No error message provided")
+                            raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
+                        return response.content
+                elif self.config.tts.type == "HF_API":
+                    if os.environ.get("STREAMING", False):
+                        raise APIError("Streaming not supported for HF API TTS")
+                    else:
+                        response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
+                        if response.status_code != 200:
+                            error_details = response.json().get("error", "No error message provided")
+                            raise APIError("TTS Error: HF API error", status_code=response.status_code, details=error_details)
+                        return response.content
+
+            except APIError as e:
+                raise
+            except Exception as e:
+                raise APIError(f"TTS Error: Unexpected error: {e}")
+        else:
+            return None

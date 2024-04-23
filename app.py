@@ -53,7 +53,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
         gr.Markdown(instruction["demo"])
 
     started_coding = gr.State(False)
-    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False, interactive=False)
+    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False, streaming=os.environ.get("STREAMING", False))
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
             with gr.Column(scale=2):
@@ -167,8 +167,6 @@ with gr.Blocks(title="AI Interviewer") as demo:
         outputs=[chat_history, chat, message, previous_code],
     )
 
-    chat.change(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output], trigger_mode="once")
-
-    # audio_output.stop(fn=lambda: None, inputs=None, outputs=[audio_output])
+    chat.change(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output])
 
 demo.launch(show_api=False)
