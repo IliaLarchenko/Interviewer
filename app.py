@@ -46,6 +46,14 @@ def hide_solution():
     return solution_acc, end_btn, problem_acc, audio_input
 
 
+def get_status_color(obj):
+    if obj.status:
+        if obj.streaming:
+            return "🟢"
+        return "🟡"
+    return "🔴"
+
+
 # Interface
 
 with gr.Blocks(title="AI Interviewer") as demo:
@@ -53,18 +61,16 @@ with gr.Blocks(title="AI Interviewer") as demo:
         gr.Markdown(instruction["demo"])
 
     started_coding = gr.State(False)
-    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=False, streaming=os.environ.get("STREAMING", False))
+    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=os.environ["DEBUG"], streaming=tts.streaming)
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
             with gr.Column(scale=2):
                 gr.Markdown(instruction["introduction"])
             with gr.Column(scale=1):
                 space = "&nbsp;" * 10
-                try:
-                    audio_test = tts.text_to_speech("Handshake")
-                    gr.Markdown(f"TTS status: 🟢{space} {config.tts.name}")
-                except:
-                    gr.Markdown(f"TTS status: 🔴{space} {config.tts.name}")
+
+                tts_status = get_status_color(tts)
+                gr.Markdown(f"TTS status: {tts_status}{space}{config.tts.name}")
 
                 try:
                     text_test = stt.speech_to_text(audio_test, False)
