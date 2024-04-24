@@ -78,11 +78,8 @@ with gr.Blocks(title="AI Interviewer") as demo:
                 except:
                     gr.Markdown(f"STT status: 🔴{space} {config.stt.name}")
 
-                try:
-                    llm.test_connection()
-                    gr.Markdown(f"LLM status: 🟢{space} {config.llm.name}")
-                except:
-                    gr.Markdown(f"LLM status: 🔴{space} {config.llm.name}")
+                llm_status = get_status_color(llm)
+                gr.Markdown(f"LLM status: {llm_status}{space}{config.llm.name}")
 
         gr.Markdown(instruction["quick_start"])
         with gr.Row():
