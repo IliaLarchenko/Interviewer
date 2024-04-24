@@ -104,7 +104,6 @@ class TTSManager:
         return response.content
 
     def read_text_stream(self, text):
-        1 / 0
         if self.config.tts.type not in ["OPENAI_API"]:
             raise APIError("TTS Error: Streaming not supported for this TTS type")
         headers = {"Authorization": "Bearer " + self.config.tts.key}
