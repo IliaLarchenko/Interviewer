@@ -124,9 +124,9 @@ class TTSManager:
             raise APIError(f"TTS Error: Unexpected error: {e}")
 
     def rlm(self, chat_history):
-        if chat_history:
+        if len(chat_history) > 0 and chat_history[-1][1]:
             return self.read_text(chat_history[-1][1])
 
     def rlm_stream(self, chat_history):
-        if chat_history:
+        if len(chat_history) > 0 and chat_history[-1][1]:
             yield from self.read_text_stream(chat_history[-1][1])
