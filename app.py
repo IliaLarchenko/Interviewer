@@ -140,13 +140,11 @@ with gr.Blocks(title="AI Interviewer") as demo:
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
         fn=lambda: True, outputs=[started_coding]
-    ).then(
+    ).then(fn=hide_settings, outputs=[init_acc, start_btn]).then(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description, chat_history],
         scroll_to_output=True,
-    ).then(
-        fn=hide_settings, outputs=[init_acc, start_btn]
     ).then(
         fn=show_solution, outputs=[solution_acc, end_btn, audio_input]
     )
