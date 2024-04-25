@@ -139,11 +139,13 @@ with gr.Blocks(title="AI Interviewer") as demo:
             feedback = gr.Markdown()
 
     # Events
-    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat])
+    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).then(
+        fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+    )
 
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
         fn=lambda: True, outputs=[started_coding]
-    ).then(fn=hide_settings, outputs=[init_acc, start_btn]).then(
+    ).then(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).then(fn=hide_settings, outputs=[init_acc, start_btn]).then(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description],
@@ -159,8 +161,10 @@ with gr.Blocks(title="AI Interviewer") as demo:
         inputs=[chat],
         outputs=[chat],
     ).then(
-        fn=hide_solution, outputs=[solution_acc, end_btn, problem_acc, audio_input]
-    ).then(fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback])
+        fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+    ).then(fn=hide_solution, outputs=[solution_acc, end_btn, problem_acc, audio_input]).then(
+        fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
+    )
 
     audio_input.stop_recording(fn=stt.speech_to_text, inputs=[audio_input], outputs=[message]).then(
         fn=lambda: None, outputs=[audio_input]
@@ -168,8 +172,8 @@ with gr.Blocks(title="AI Interviewer") as demo:
         fn=llm.send_request,
         inputs=[code, previous_code, message, chat_history, chat],
         outputs=[chat_history, chat, message, previous_code],
+    ).then(
+        fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
     )
-
-    chat.change(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output])
 
 demo.launch(show_api=False)
