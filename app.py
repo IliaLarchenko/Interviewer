@@ -8,7 +8,7 @@ from config import config
 from docs.instruction import instruction
 from resources.data import fixed_messages, topics_list
 from resources.prompts import prompts
-from utils.ui import add_candidate_message, add_interviewer_message
+from utils.ui import add_interviewer_message
 
 llm = LLMManager(config, prompts)
 tts = TTSManager(config)
@@ -72,11 +72,8 @@ with gr.Blocks(title="AI Interviewer") as demo:
                 tts_status = get_status_color(tts)
                 gr.Markdown(f"TTS status: {tts_status}{space}{config.tts.name}")
 
-                try:
-                    text_test = stt.speech_to_text(audio_test, False)
-                    gr.Markdown(f"STT status: 🟢{space} {config.stt.name}")
-                except:
-                    gr.Markdown(f"STT status: 🔴{space} {config.stt.name}")
+                stt_status = get_status_color(stt)
+                gr.Markdown(f"STT status: {stt_status}{space}{config.stt.name}")
 
                 llm_status = get_status_color(llm)
                 gr.Markdown(f"LLM status: {llm_status}{space}{config.llm.name}")
@@ -134,7 +131,6 @@ with gr.Blocks(title="AI Interviewer") as demo:
                     end_btn = gr.Button("Finish the interview", interactive=False)
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
                     audio_input = gr.Audio(interactive=False, **default_audio_params)
-                    # message = gr.Textbox(label="Message", lines=3, visible=False)
 
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
@@ -167,7 +163,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
         fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
     )
 
-    audio_input.stop_recording(fn=stt.speech_to_text, inputs=[audio_input, chat], outputs=[chat]).then(
+    audio_input.stop_recording(fn=stt.add_user_message, inputs=[audio_input, chat], outputs=[chat]).then(
         fn=lambda: None, outputs=[audio_input]
     ).then(
         fn=llm.send_request,

@@ -2,6 +2,7 @@ import io
 import os
 import wave
 
+import numpy as np
 import requests
 
 from openai import OpenAI
@@ -30,8 +31,10 @@ class STTManager:
     def __init__(self, config):
         self.config = config
         self.streaming = os.getenv("STREAMING", False)
+        self.status = self.test_stt()
+        self.streaming = False
 
-    def speech_to_text(self, audio, chat_display):
+    def speech_to_text(self, audio):
         audio = numpy_audio_to_bytes(audio[1])
         try:
             if self.config.stt.type == "OPENAI_API":
@@ -52,6 +55,17 @@ class STTManager:
         except Exception as e:
             raise APIError(f"STT Error: Unexpected error: {e}")
 
+        return transcription
+
+    def test_stt(self):
+        try:
+            self.speech_to_text((48000, np.zeros(10000)))
+            return True
+        except:
+            return False
+
+    def add_user_message(self, audio, chat_display):
+        transcription = self.speech_to_text(audio)
         chat_display.append([transcription, None])
         return chat_display
 
