@@ -102,7 +102,7 @@ class TTSManager:
         try:
             if self.config.tts.type == "OPENAI_API":
                 data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
-                response = requests.post(self.config.tts.url, headers=headers, json=data)
+                response = requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data)
             elif self.config.tts.type == "HF_API":
                 response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
             if response.status_code != 200:
@@ -122,7 +122,7 @@ class TTSManager:
         data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
 
         try:
-            with requests.post(self.config.tts.url, headers=headers, json=data, stream=True) as response:
+            with requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data, stream=True) as response:
                 if response.status_code != 200:
                     error_details = response.json().get("error", "No error message provided")
                     raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
