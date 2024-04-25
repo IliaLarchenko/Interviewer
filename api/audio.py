@@ -30,7 +30,6 @@ def numpy_audio_to_bytes(audio_data):
 class STTManager:
     def __init__(self, config):
         self.config = config
-        self.streaming = os.getenv("STREAMING", False)
         self.status = self.test_stt()
         self.streaming = False
 
