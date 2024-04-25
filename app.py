@@ -146,8 +146,10 @@ with gr.Blocks(title="AI Interviewer") as demo:
     ).then(fn=hide_settings, outputs=[init_acc, start_btn]).then(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
-        outputs=[description, chat_history],
+        outputs=[description],
         scroll_to_output=True,
+    ).then(
+        fn=llm.init_bot, inputs=[description], outputs=[chat_history]
     ).then(
         fn=show_solution, outputs=[solution_acc, end_btn, audio_input]
     )

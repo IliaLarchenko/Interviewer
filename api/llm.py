@@ -21,8 +21,10 @@ class LLMManager:
 
         if self.streaming:
             self.end_interview = self.end_interview_stream
+            self.get_problem = self.get_problem_stream
         else:
             self.end_interview = self.end_interview_full
+            self.get_problem = self.get_problem_full
 
     def text_processor(self):
         def ans_full(response):
@@ -92,7 +94,7 @@ class LLMManager:
             {"role": "system", "content": f"The candidate is solving the following problem: {problem}"},
         ]
 
-    def get_problem(self, requirements, difficulty, topic):
+    def get_problem_prepare_messages(self, requirements, difficulty, topic):
         full_prompt = (
             f"Create a {difficulty} {topic} coding problem. "
             f"Additional requirements: {requirements}. "
@@ -103,15 +105,20 @@ class LLMManager:
         if self.is_demo:
             full_prompt += f" Keep your response very short and simple, no more than {self.demo_word_limit} words."
 
-        question = self.get_text(
-            [
-                {"role": "system", "content": self.prompts["problem_generation_prompt"]},
-                {"role": "user", "content": full_prompt},
-            ]
-        )
+        messages = [
+            {"role": "system", "content": self.prompts["problem_generation_prompt"]},
+            {"role": "user", "content": full_prompt},
+        ]
 
-        chat_history = self.init_bot(question)
-        return question, chat_history
+        return messages
+
+    def get_problem_full(self, requirements, difficulty, topic):
+        messages = self.get_problem_prepare_messages(requirements, difficulty, topic)
+        return self.get_text(messages)
+
+    def get_problem_stream(self, requirements, difficulty, topic):
+        messages = self.get_problem_prepare_messages(requirements, difficulty, topic)
+        yield from self.get_text_stream(messages)
 
     def send_request(self, code, previous_code, message, chat_history, chat_display):
         if code != previous_code:
@@ -128,7 +135,6 @@ class LLMManager:
 
         return chat_history, chat_display, "", code
 
-    # TODO: implement both streaming and non-streaming versions
     def end_interview_prepare_messages(self, problem_description, chat_history):
         transcript = [f"{message['role'].capitalize()}: {message['content']}" for message in chat_history[1:]]
 
