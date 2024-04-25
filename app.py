@@ -136,20 +136,22 @@ with gr.Blocks(title="AI Interviewer") as demo:
             feedback = gr.Markdown()
 
     # Events
-    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).then(
+    coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).success(
         fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
     )
 
-    start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).then(
+    start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).success(
         fn=lambda: True, outputs=[started_coding]
-    ).then(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).then(fn=hide_settings, outputs=[init_acc, start_btn]).then(
+    ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
+        fn=hide_settings, outputs=[init_acc, start_btn]
+    ).success(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
         outputs=[description],
         scroll_to_output=True,
-    ).then(
+    ).success(
         fn=llm.init_bot, inputs=[description], outputs=[chat_history]
-    ).then(
+    ).success(
         fn=show_solution, outputs=[solution_acc, end_btn, audio_input]
     )
 
@@ -157,19 +159,19 @@ with gr.Blocks(title="AI Interviewer") as demo:
         fn=add_interviewer_message(fixed_messages["end"]),
         inputs=[chat],
         outputs=[chat],
-    ).then(
+    ).success(
         fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-    ).then(fn=hide_solution, outputs=[solution_acc, end_btn, problem_acc, audio_input]).then(
+    ).success(fn=hide_solution, outputs=[solution_acc, end_btn, problem_acc, audio_input]).success(
         fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
     )
 
-    audio_input.stop_recording(fn=stt.add_user_message, inputs=[audio_input, chat], outputs=[chat]).then(
+    audio_input.stop_recording(fn=stt.add_user_message, inputs=[audio_input, chat], outputs=[chat]).success(
         fn=lambda: None, outputs=[audio_input]
-    ).then(
+    ).success(
         fn=llm.send_request,
         inputs=[code, previous_code, chat_history, chat],
         outputs=[chat_history, chat, previous_code],
-    ).then(
+    ).success(
         fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
     )
 
