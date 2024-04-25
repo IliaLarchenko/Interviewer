@@ -22,9 +22,11 @@ class LLMManager:
         if self.streaming:
             self.end_interview = self.end_interview_stream
             self.get_problem = self.get_problem_stream
+            self.send_request = self.send_request_stream
         else:
             self.end_interview = self.end_interview_full
             self.get_problem = self.get_problem_full
+            self.send_request = self.send_request_full
 
     def text_processor(self):
         def ans_full(response):
@@ -120,20 +122,34 @@ class LLMManager:
         messages = self.get_problem_prepare_messages(requirements, difficulty, topic)
         yield from self.get_text_stream(messages)
 
-    def send_request(self, code, previous_code, message, chat_history, chat_display):
+    def update_chat_history(self, code, previous_code, message, chat_history):
         if code != previous_code:
             chat_history.append({"role": "user", "content": f"My latest code:\n{code}"})
         chat_history.append({"role": "user", "content": message})
 
+        return chat_history
+
+    def send_request_full(self, code, previous_code, message, chat_history, chat_display):
+        chat_history = self.update_chat_history(code, previous_code, message, chat_history)
+
         reply = self.get_text(chat_history)
+        chat_display.append([None, reply])
         chat_history.append({"role": "assistant", "content": reply})
 
-        if chat_display:
-            chat_display[-1][1] = reply
-        else:
-            chat_display.append([message, reply])
+        return chat_history, chat_display, code
 
-        return chat_history, chat_display, "", code
+    def send_request_stream(self, code, previous_code, message, chat_history, chat_display):
+        chat_history = self.update_chat_history(code, previous_code, message, chat_history)
+
+        chat_display.append([None, ""])
+        chat_history.append({"role": "assistant", "content": ""})
+
+        reply = self.get_text_stream(chat_history)
+        for message in reply:
+            chat_display[-1][1] = message
+            chat_history[-1]["content"] = message
+
+            yield chat_history, chat_display, code
 
     def end_interview_prepare_messages(self, problem_description, chat_history):
         transcript = [f"{message['role'].capitalize()}: {message['content']}" for message in chat_history[1:]]

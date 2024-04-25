@@ -171,9 +171,11 @@ with gr.Blocks(title="AI Interviewer") as demo:
     ).then(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).then(
         fn=llm.send_request,
         inputs=[code, previous_code, message, chat_history, chat],
-        outputs=[chat_history, chat, message, previous_code],
+        outputs=[chat_history, chat, previous_code],
     ).then(
         fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+    ).then(
+        fn=lambda: "", outputs=[message]
     )
 
 demo.launch(show_api=False)
