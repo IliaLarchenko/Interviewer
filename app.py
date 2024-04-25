@@ -93,6 +93,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
                 audio_input_example = gr.Audio(interactive=True, **default_audio_params)
         gr.Markdown(instruction["models"])
         gr.Markdown(instruction["acknowledgements"])
+        gr.Markdown(instruction["legal"])
 
     with gr.Tab("Coding") as coding_tab:
         chat_history = gr.State([])
