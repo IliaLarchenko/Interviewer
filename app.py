@@ -61,7 +61,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
         gr.Markdown(instruction["demo"])
 
     started_coding = gr.State(False)
-    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=os.environ["DEBUG"], streaming=tts.streaming)
+    audio_output = gr.Audio(label="Play audio", autoplay=True, visible=os.environ.get("DEBUG", False), streaming=tts.streaming)
     with gr.Tab("Instruction") as instruction_tab:
         with gr.Row():
             with gr.Column(scale=2):
