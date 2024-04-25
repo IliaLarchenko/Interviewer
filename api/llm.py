@@ -122,15 +122,16 @@ class LLMManager:
         messages = self.get_problem_prepare_messages(requirements, difficulty, topic)
         yield from self.get_text_stream(messages)
 
-    def update_chat_history(self, code, previous_code, message, chat_history):
+    def update_chat_history(self, code, previous_code, chat_history, chat_display):
+        message = chat_display[-1][0]
         if code != previous_code:
             chat_history.append({"role": "user", "content": f"My latest code:\n{code}"})
         chat_history.append({"role": "user", "content": message})
 
         return chat_history
 
-    def send_request_full(self, code, previous_code, message, chat_history, chat_display):
-        chat_history = self.update_chat_history(code, previous_code, message, chat_history)
+    def send_request_full(self, code, previous_code, chat_history, chat_display):
+        chat_history = self.update_chat_history(code, previous_code, chat_history, chat_display)
 
         reply = self.get_text(chat_history)
         chat_display.append([None, reply])
@@ -138,8 +139,8 @@ class LLMManager:
 
         return chat_history, chat_display, code
 
-    def send_request_stream(self, code, previous_code, message, chat_history, chat_display):
-        chat_history = self.update_chat_history(code, previous_code, message, chat_history)
+    def send_request_stream(self, code, previous_code, chat_history, chat_display):
+        chat_history = self.update_chat_history(code, previous_code, chat_history, chat_display)
 
         chat_display.append([None, ""])
         chat_history.append({"role": "assistant", "content": ""})

@@ -31,10 +31,8 @@ class STTManager:
         self.config = config
         self.streaming = os.getenv("STREAMING", False)
 
-    def speech_to_text(self, audio, convert_to_bytes=True):
-        if convert_to_bytes:
-            audio = numpy_audio_to_bytes(audio[1])
-
+    def speech_to_text(self, audio, chat_display):
+        audio = numpy_audio_to_bytes(audio[1])
         try:
             if self.config.stt.type == "OPENAI_API":
                 data = ("temp.wav", audio, "audio/wav")
@@ -54,7 +52,8 @@ class STTManager:
         except Exception as e:
             raise APIError(f"STT Error: Unexpected error: {e}")
 
-        return transcription
+        chat_display.append([transcription, None])
+        return chat_display
 
 
 class TTSManager:

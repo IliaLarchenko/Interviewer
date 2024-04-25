@@ -133,7 +133,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
                     end_btn = gr.Button("Finish the interview", interactive=False)
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
                     audio_input = gr.Audio(interactive=False, **default_audio_params)
-                    message = gr.Textbox(label="Message", lines=3, visible=False)
+                    # message = gr.Textbox(label="Message", lines=3, visible=False)
 
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
@@ -166,16 +166,14 @@ with gr.Blocks(title="AI Interviewer") as demo:
         fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
     )
 
-    audio_input.stop_recording(fn=stt.speech_to_text, inputs=[audio_input], outputs=[message]).then(
+    audio_input.stop_recording(fn=stt.speech_to_text, inputs=[audio_input, chat], outputs=[chat]).then(
         fn=lambda: None, outputs=[audio_input]
-    ).then(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).then(
+    ).then(
         fn=llm.send_request,
-        inputs=[code, previous_code, message, chat_history, chat],
+        inputs=[code, previous_code, chat_history, chat],
         outputs=[chat_history, chat, previous_code],
     ).then(
         fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-    ).then(
-        fn=lambda: "", outputs=[message]
     )
 
 demo.launch(show_api=False)
