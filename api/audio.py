@@ -1,5 +1,4 @@
 import io
-import os
 import wave
 
 import numpy as np
@@ -125,10 +124,6 @@ class STTManager:
             return True
         except:
             return False
-
-    def add_user_message(self, message, chat_display):
-        chat_display.append([message, None])
-        return chat_display
 
 
 class TTSManager:

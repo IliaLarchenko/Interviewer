@@ -9,23 +9,13 @@ from config import config
 from docs.instruction import instruction
 from resources.data import fixed_messages, topics_list
 from resources.prompts import prompts
-from utils.ui import add_interviewer_message
+from utils.ui import add_candidate_message, add_interviewer_message, get_status_color
 
 llm = LLMManager(config, prompts)
 tts = TTSManager(config)
 stt = STTManager(config)
 
-
-def get_status_color(obj):
-    if obj.status:
-        if obj.streaming:
-            return "🟢"
-        return "🟡"
-    return "🔴"
-
-
 # Interface
-
 with gr.Blocks(title="AI Interviewer") as demo:
     if os.getenv("IS_DEMO"):
         gr.Markdown(instruction["demo"])
@@ -54,6 +44,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
                 gr.Markdown(instruction["interface"])
             with gr.Column(scale=1):
                 gr.Markdown("Bot interaction area will look like this. Use Record button to record your answer.")
+                gr.Markdown("Click 'Send' to send you answer and get a reply.")
                 chat_example = gr.Chatbot(
                     label="Chat", show_label=False, show_share_button=False, value=[["Candidate message", "Interviewer message"]]
                 )
@@ -67,6 +58,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
                     "show_share_button": False,
                     "streaming": stt.streaming,
                 }
+                send_btn_example = gr.Button("Send", interactive=False)
                 audio_input_example = gr.Audio(interactive=True, **default_audio_params)
         gr.Markdown(instruction["models"])
         gr.Markdown(instruction["acknowledgements"])
@@ -159,7 +151,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
         fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
     )
 
-    send_btn.click(fn=stt.add_user_message, inputs=[message, chat], outputs=[chat]).success(fn=lambda: None, outputs=[message]).success(
+    send_btn.click(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).success(fn=lambda: None, outputs=[message]).success(
         fn=llm.send_request,
         inputs=[code, previous_code, chat_history, chat],
         outputs=[chat_history, chat, previous_code],
