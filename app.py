@@ -15,38 +15,6 @@ llm = LLMManager(config, prompts)
 tts = TTSManager(config)
 stt = STTManager(config)
 
-default_audio_params = {
-    "label": "Record answer",
-    "sources": ["microphone"],
-    "type": "numpy",
-    "waveform_options": {"show_controls": False},
-    "editable": False,
-    "container": False,
-    "show_share_button": False,
-    "streaming": stt.streaming,
-}
-
-
-def hide_settings():
-    init_acc = gr.Accordion("Settings", open=False)
-    start_btn = gr.Button("Generate a problem", interactive=False)
-    return init_acc, start_btn
-
-
-def show_solution():
-    solution_acc = gr.Accordion("Solution", open=True)
-    end_btn = gr.Button("Finish the interview", interactive=True)
-    audio_input = gr.Audio(interactive=True, **default_audio_params)
-    return solution_acc, end_btn, audio_input
-
-
-def hide_solution():
-    solution_acc = gr.Accordion("Solution", open=False)
-    end_btn = gr.Button("Finish the interview", interactive=False)
-    problem_acc = gr.Accordion("Problem statement", open=False)
-    audio_input = gr.Audio(interactive=False, **default_audio_params)
-    return solution_acc, end_btn, problem_acc, audio_input
-
 
 def get_status_color(obj):
     if obj.status:
@@ -89,6 +57,16 @@ with gr.Blocks(title="AI Interviewer") as demo:
                 chat_example = gr.Chatbot(
                     label="Chat", show_label=False, show_share_button=False, value=[["Candidate message", "Interviewer message"]]
                 )
+                default_audio_params = {
+                    "label": "Record answer",
+                    "sources": ["microphone"],
+                    "type": "numpy",
+                    "waveform_options": {"show_controls": False},
+                    "editable": False,
+                    "container": False,
+                    "show_share_button": False,
+                    "streaming": stt.streaming,
+                }
                 audio_input_example = gr.Audio(interactive=True, **default_audio_params)
         gr.Markdown(instruction["models"])
         gr.Markdown(instruction["acknowledgements"])
@@ -157,7 +135,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
     start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).success(
         fn=lambda: True, outputs=[started_coding]
     ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
-        fn=hide_settings, outputs=[init_acc, start_btn]
+        fn=lambda: (gr.update(open=False), gr.update(interactive=False)), outputs=[init_acc, start_btn]
     ).success(
         fn=llm.get_problem,
         inputs=[requirements, difficulty_select, topic_select],
@@ -166,16 +144,18 @@ with gr.Blocks(title="AI Interviewer") as demo:
     ).success(
         fn=llm.init_bot, inputs=[description], outputs=[chat_history]
     ).success(
-        fn=show_solution, outputs=[solution_acc, end_btn, audio_input]
+        fn=lambda: (gr.update(open=True), gr.update(interactive=True), gr.update(interactive=True)),
+        outputs=[solution_acc, end_btn, audio_input],
     )
 
     end_btn.click(
         fn=add_interviewer_message(fixed_messages["end"]),
         inputs=[chat],
         outputs=[chat],
+    ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
+        fn=lambda: (gr.update(open=False), gr.update(interactive=False), gr.update(open=False), gr.update(interactive=False)),
+        outputs=[solution_acc, end_btn, problem_acc, audio_input],
     ).success(
-        fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-    ).success(fn=hide_solution, outputs=[solution_acc, end_btn, problem_acc, audio_input]).success(
         fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
     )
 
@@ -184,7 +164,7 @@ with gr.Blocks(title="AI Interviewer") as demo:
         inputs=[code, previous_code, chat_history, chat],
         outputs=[chat_history, chat, previous_code],
     ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
-        fn=lambda: gr.Button("Send", interactive=False), outputs=[send_btn]
+        fn=lambda: gr.update(interactive=False), outputs=[send_btn]
     ).success(
         fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
     ).success(
@@ -198,10 +178,10 @@ with gr.Blocks(title="AI Interviewer") as demo:
             outputs=[transcript, audio_buffer, message],
             show_progress="hidden",
         )
-        audio_input.stop_recording(fn=lambda: gr.Button("Send", interactive=True), outputs=[send_btn])
+        audio_input.stop_recording(fn=lambda: gr.update(interactive=True), outputs=[send_btn])
     else:
         audio_input.stop_recording(fn=stt.speech_to_text_full, inputs=[audio_input], outputs=[message]).success(
-            fn=lambda: gr.Button("Send", interactive=True), outputs=[send_btn]
+            fn=lambda: gr.update(interactive=True), outputs=[send_btn]
         ).success(fn=lambda: None, outputs=[audio_input])
 
 demo.launch(show_api=False)
