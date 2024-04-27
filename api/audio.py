@@ -10,31 +10,87 @@ from openai import OpenAI
 from utils.errors import APIError, AudioConversionError
 
 
-def numpy_audio_to_bytes(audio_data):
-    sample_rate = 44100
-    num_channels = 1
-    sampwidth = 2
-
-    buffer = io.BytesIO()
-    try:
-        with wave.open(buffer, "wb") as wf:
-            wf.setnchannels(num_channels)
-            wf.setsampwidth(sampwidth)
-            wf.setframerate(sample_rate)
-            wf.writeframes(audio_data.tobytes())
-    except Exception as e:
-        raise AudioConversionError(f"Error converting numpy array to audio bytes: {e}")
-    return buffer.getvalue()
-
-
 class STTManager:
     def __init__(self, config):
+        self.SAMPLE_RATE = 48000
+        self.CHUNK_LENGTH = 5
+        self.STEP_LENGTH = 3
+        self.MAX_RELIABILITY_CUTOFF = self.CHUNK_LENGTH - 1
+
         self.config = config
         self.status = self.test_stt()
-        self.streaming = False
+        self.streaming = self.test_streaming()
 
-    def speech_to_text(self, audio):
-        audio = numpy_audio_to_bytes(audio[1])
+    def numpy_audio_to_bytes(self, audio_data):
+        num_channels = 1
+        sampwidth = 2
+
+        buffer = io.BytesIO()
+        try:
+            with wave.open(buffer, "wb") as wf:
+                wf.setnchannels(num_channels)
+                wf.setsampwidth(sampwidth)
+                wf.setframerate(self.SAMPLE_RATE)
+                wf.writeframes(audio_data.tobytes())
+        except Exception as e:
+            raise AudioConversionError(f"Error converting numpy array to audio bytes: {e}")
+        return buffer.getvalue()
+
+    def process_audio_chunk(self, audio, audio_buffer, transcript):
+        """Process streamed audio data to accumulate and transcribe with overlapping segments."""
+        audio_buffer = np.concatenate((audio_buffer, audio[1]))
+
+        if len(audio_buffer) >= self.SAMPLE_RATE * self.CHUNK_LENGTH or len(audio_buffer) % (self.SAMPLE_RATE // 2) != 0:
+            audio_bytes = self.numpy_audio_to_bytes(audio_buffer[: self.SAMPLE_RATE * self.CHUNK_LENGTH])
+            audio_buffer = audio_buffer[self.SAMPLE_RATE * self.STEP_LENGTH :]
+
+            new_transcript = self.speech_to_text_stream(audio_bytes)
+            transcript = self.merge_transcript(transcript, new_transcript)
+
+        return transcript, audio_buffer, transcript["text"]
+
+    def speech_to_text_stream(self, audio):
+        if self.config.stt.type == "HF_API":
+            raise APIError("STT Error: Streaming not supported for this STT type")
+        try:
+            data = ("temp.wav", audio, "audio/wav")
+            client = OpenAI(base_url=self.config.stt.url, api_key=self.config.stt.key)
+            transcription = client.audio.transcriptions.create(
+                model=self.config.stt.name, file=data, response_format="verbose_json", timestamp_granularities=["word"]
+            )
+        except APIError as e:
+            raise
+        except Exception as e:
+            raise APIError(f"STT Error: Unexpected error: {e}")
+        return transcription.words
+
+    def merge_transcript(self, transcript, new_transcript):
+        cut_off = transcript["last_cutoff"]
+        transcript["last_cutoff"] = self.MAX_RELIABILITY_CUTOFF - self.STEP_LENGTH
+
+        transcript["words"] = transcript["words"][: len(transcript["words"]) - transcript["not_confirmed"]]
+
+        transcript["not_confirmed"] = 0
+        first_word = True
+
+        for word_dict in new_transcript:
+            if word_dict["start"] >= cut_off:
+                if first_word:
+                    if len(transcript["words"]) > 0 and transcript["words"][-1] == word_dict["word"]:
+                        continue
+                first_word = False
+                transcript["words"].append(word_dict["word"])
+                if word_dict["start"] > self.MAX_RELIABILITY_CUTOFF:
+                    transcript["not_confirmed"] += 1
+                else:
+                    transcript["last_cutoff"] = max(1.0, word_dict["end"] - self.STEP_LENGTH)
+
+        transcript["text"] = " ".join(transcript["words"])
+
+        return transcript
+
+    def speech_to_text_full(self, audio):
+        audio = self.numpy_audio_to_bytes(audio[1])
         try:
             if self.config.stt.type == "OPENAI_API":
                 data = ("temp.wav", audio, "audio/wav")
@@ -58,14 +114,20 @@ class STTManager:
 
     def test_stt(self):
         try:
-            self.speech_to_text((48000, np.zeros(10000)))
+            self.speech_to_text_full((48000, np.zeros(10000)))
             return True
         except:
             return False
 
-    def add_user_message(self, audio, chat_display):
-        transcription = self.speech_to_text(audio)
-        chat_display.append([transcription, None])
+    def test_streaming(self):
+        try:
+            self.speech_to_text_stream(self.numpy_audio_to_bytes(np.zeros(10000)))
+            return True
+        except:
+            return False
+
+    def add_user_message(self, message, chat_display):
+        chat_display.append([message, None])
         return chat_display
 
 

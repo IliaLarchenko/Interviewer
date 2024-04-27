@@ -1,6 +1,7 @@
 import os
 
 import gradio as gr
+import numpy as np
 
 from api.audio import STTManager, TTSManager
 from api.llm import LLMManager
@@ -22,6 +23,7 @@ default_audio_params = {
     "editable": False,
     "container": False,
     "show_share_button": False,
+    "streaming": stt.streaming,
 }
 
 
@@ -125,12 +127,24 @@ with gr.Blocks(title="AI Interviewer") as demo:
                     code = gr.Code(
                         label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
                         language="python",
-                        lines=35,
+                        lines=46,
                     )
                 with gr.Column(scale=1):
                     end_btn = gr.Button("Finish the interview", interactive=False)
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
+                    message = gr.Textbox(
+                        label="Message",
+                        placeholder="Your message will appear here",
+                        show_label=False,
+                        lines=3,
+                        max_lines=3,
+                        interactive=False,
+                    )
+                    send_btn = gr.Button("Send", interactive=False)
                     audio_input = gr.Audio(interactive=False, **default_audio_params)
+
+                    audio_buffer = gr.State(np.array([], dtype=np.int16))
+                    transcript = gr.State({"words": [], "not_confirmed": 0, "last_cutoff": 0, "text": ""})
 
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown()
@@ -165,14 +179,29 @@ with gr.Blocks(title="AI Interviewer") as demo:
         fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
     )
 
-    audio_input.stop_recording(fn=stt.add_user_message, inputs=[audio_input, chat], outputs=[chat]).success(
-        fn=lambda: None, outputs=[audio_input]
-    ).success(
+    send_btn.click(fn=stt.add_user_message, inputs=[message, chat], outputs=[chat]).success(fn=lambda: None, outputs=[message]).success(
         fn=llm.send_request,
         inputs=[code, previous_code, chat_history, chat],
         outputs=[chat_history, chat, previous_code],
+    ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
+        fn=lambda: gr.Button("Send", interactive=False), outputs=[send_btn]
     ).success(
-        fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+        fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
+    ).success(
+        fn=lambda: {"words": [], "not_confirmed": 0, "last_cutoff": 0, "text": ""}, outputs=[transcript]
     )
+
+    if stt.streaming:
+        audio_input.stream(
+            stt.process_audio_chunk,
+            inputs=[audio_input, audio_buffer, transcript],
+            outputs=[transcript, audio_buffer, message],
+            show_progress="hidden",
+        )
+        audio_input.stop_recording(fn=lambda: gr.Button("Send", interactive=True), outputs=[send_btn])
+    else:
+        audio_input.stop_recording(fn=stt.speech_to_text_full, inputs=[audio_input], outputs=[message]).success(
+            fn=lambda: gr.Button("Send", interactive=True), outputs=[send_btn]
+        ).success(fn=lambda: None, outputs=[audio_input])
 
 demo.launch(show_api=False)
