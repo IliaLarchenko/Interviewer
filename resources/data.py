@@ -1,4 +1,4 @@
-topics_list = [
+coding_topics_list = [
     "Arrays",
     "Strings",
     "Linked Lists",

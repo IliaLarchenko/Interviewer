@@ -1,7 +1,7 @@
 import gradio as gr
 import numpy as np
 
-from resources.data import fixed_messages, topics_list
+from resources.data import coding_topics_list, fixed_messages
 from utils.ui import add_candidate_message, add_interviewer_message
 
 
@@ -10,6 +10,7 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
         chat_history = gr.State([])
         previous_code = gr.State("")
         started_coding = gr.State(False)
+        interview_type = gr.State("coding")
         with gr.Accordion("Settings") as init_acc:
             with gr.Row():
                 with gr.Column():
@@ -26,7 +27,7 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
                     with gr.Row():
                         gr.Markdown("Topic (can type custom value)")
                         topic_select = gr.Dropdown(
-                            label="Select topic", choices=topics_list, value="Arrays", container=False, allow_custom_value=True
+                            label="Select topic", choices=coding_topics_list, value="Arrays", container=False, allow_custom_value=True
                         )
                 with gr.Column(scale=2):
                     requirements = gr.Textbox(label="Requirements", placeholder="Specify additional requirements", lines=5)
@@ -68,11 +69,11 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
             fn=lambda: (gr.update(open=False), gr.update(interactive=False)), outputs=[init_acc, start_btn]
         ).success(
             fn=llm.get_problem,
-            inputs=[requirements, difficulty_select, topic_select],
+            inputs=[requirements, difficulty_select, topic_select, interview_type],
             outputs=[description],
             scroll_to_output=True,
         ).success(
-            fn=llm.init_bot, inputs=[description], outputs=[chat_history]
+            fn=llm.init_bot, inputs=[description, interview_type], outputs=[chat_history]
         ).success(
             fn=lambda: (gr.update(open=True), gr.update(interactive=True), gr.update(interactive=True)),
             outputs=[solution_acc, end_btn, audio_input],
@@ -86,7 +87,7 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
             fn=lambda: (gr.update(open=False), gr.update(interactive=False), gr.update(open=False), gr.update(interactive=False)),
             outputs=[solution_acc, end_btn, problem_acc, audio_input],
         ).success(
-            fn=llm.end_interview, inputs=[description, chat_history], outputs=[feedback]
+            fn=llm.end_interview, inputs=[description, chat_history, interview_type], outputs=[feedback]
         )
 
         send_btn.click(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).success(
