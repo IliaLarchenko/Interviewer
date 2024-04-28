@@ -25,11 +25,13 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
                             allow_custom_value=True,
                         )
                     with gr.Row():
+                        topics = topic_lists[interview_type.value].copy()
+                        np.random.shuffle(topics)
                         gr.Markdown("Topic (can type custom value)")
                         topic_select = gr.Dropdown(
                             label="Select topic",
-                            choices=topic_lists[interview_type.value],
-                            value=topic_lists[interview_type.value][0],
+                            choices=topics,
+                            value=topics[0],
                             container=False,
                             allow_custom_value=True,
                         )
@@ -42,7 +44,7 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
         with gr.Accordion("Solution", open=False) as solution_acc:
             with gr.Row() as content:
                 with gr.Column(scale=2):
-                    if interview_type == "coding":
+                    if interview_type.value == "coding":
                         code = gr.Code(
                             label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
                             language="python",
