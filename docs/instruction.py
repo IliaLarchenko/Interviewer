@@ -17,15 +17,15 @@ This tool is designed to help you practice coding interviews by simulating the r
 - **Various AI Models**: The tool uses three types of AI models:
   - **LLM (Large Language Model)**: Acts as the interviewer.
   - **Speech-to-Text and Text-to-Speech Models**: These help mimic real conversations by converting spoken words to text and vice versa.
-- **Model Flexibility**: The tool works with many different models, including those from OpenAI and open-source models from Hugging Face.
+- **Model Flexibility**: The tool works with many different models, including those from OpenAI, open-source models from Hugging Face, and locally running models.
+- **Streaming Mode**: The tool can use all models in streaming mode when it is supported. Instead of waiting for the full response from the AI, you can get partial responses in real-time.
 
 ## Planned Updates
 
 This is just the first beta version, and I'm working on enhancing this tool. Planned updates include:
 1. **More Interview Types**: Adding simulations like Systems Design, Machine Learning System Design, Math and Logic, Behavioral Interviews, and Theory Tests.
-2. **Streaming Mode for Models**: Updating the models to provide faster responses during interviews.
-3. **Testing More Models**: Exploring additional open-source models to enhance the tool’s performance and flexibility.
-4. **Improving the User Interface**: Making it easier to navigate and use, ensuring a better experience for all users.
+2. **Testing More Models**: Exploring additional open-source models to enhance the tool’s performance and flexibility.
+3. **Improving the User Interface**: Making it easier to navigate and use, ensuring a better experience for all users.
     """,
     "quick_start": """
 # Running the AI Tech Interviewer Simulator
@@ -212,7 +212,7 @@ Contributors are required to ensure that their contributions comply with this li
 
 if __name__ == "__main__":
     spaces_config = """---
-title: Interviewer
+title: Interviw With AI
 emoji: 📚
 colorFrom: pink
 colorTo: yellow
@@ -221,6 +221,19 @@ sdk_version: 4.27.0
 app_file: app.py
 pinned: true
 license: apache-2.0
+short_description: Mock tech interview with AI.
+tags:
+  - LLM
+  - AI
+  - Interview
+  - Coding
+  - System Design
+  - Speech-to-Text
+  - Text-to-Speech
+  - Agent
+  - Chatbot
+  - Voice Assistant
+  - Education
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
