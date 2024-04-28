@@ -212,7 +212,7 @@ Contributors are required to ensure that their contributions comply with this li
 
 if __name__ == "__main__":
     spaces_config = """---
-title: Interviw With AI
+title: Interview With AI
 emoji: 📚
 colorFrom: pink
 colorTo: yellow
