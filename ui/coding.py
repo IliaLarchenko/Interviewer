@@ -1,16 +1,16 @@
 import gradio as gr
 import numpy as np
 
-from resources.data import coding_topics_list, fixed_messages
+from resources.data import fixed_messages, topic_lists
 from utils.ui import add_candidate_message, add_interviewer_message
 
 
-def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
-    with gr.Tab("Coding", render=False) as coding_tab:
+def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, name="Coding", interview_type="coding"):
+    with gr.Tab(name, render=False) as problem_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
         started_coding = gr.State(False)
-        interview_type = gr.State("coding")
+        interview_type = gr.State(interview_type)
         with gr.Accordion("Settings") as init_acc:
             with gr.Row():
                 with gr.Column():
@@ -27,7 +27,11 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
                     with gr.Row():
                         gr.Markdown("Topic (can type custom value)")
                         topic_select = gr.Dropdown(
-                            label="Select topic", choices=coding_topics_list, value="Arrays", container=False, allow_custom_value=True
+                            label="Select topic",
+                            choices=topic_lists[interview_type.value],
+                            value=topic_lists[interview_type.value][0],
+                            container=False,
+                            allow_custom_value=True,
                         )
                 with gr.Column(scale=2):
                     requirements = gr.Textbox(label="Requirements", placeholder="Specify additional requirements", lines=5)
@@ -38,11 +42,19 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
         with gr.Accordion("Solution", open=False) as solution_acc:
             with gr.Row() as content:
                 with gr.Column(scale=2):
-                    code = gr.Code(
-                        label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
-                        language="python",
-                        lines=46,
-                    )
+                    if interview_type == "coding":
+                        code = gr.Code(
+                            label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
+                            language="python",
+                            lines=46,
+                        )
+                    else:
+                        code = gr.Textbox(
+                            label="Please write any notes for your solution here.",
+                            lines=46,
+                            max_lines=46,
+                            show_label=False,
+                        )
                 with gr.Column(scale=1):
                     end_btn = gr.Button("Finish the interview", interactive=False)
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
@@ -119,8 +131,8 @@ def get_codding_ui(llm, tts, stt, default_audio_params, audio_output):
                 fn=lambda: gr.update(interactive=True), outputs=[send_btn]
             ).success(fn=lambda: None, outputs=[audio_input])
 
-        coding_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).success(
+        problem_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).success(
             fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
         )
 
-    return coding_tab
+    return problem_tab
