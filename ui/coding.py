@@ -50,23 +50,28 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
                             language="python",
                             lines=46,
                         )
-                    else:
-                        code = gr.Textbox(
-                            label="Please write any notes for your solution here.",
+                    elif interview_type.value == "sql":
+                        code = gr.Code(
+                            label="Please write your query here.",
+                            language="sql",
                             lines=46,
-                            max_lines=46,
-                            show_label=False,
+                        )
+                    else:
+                        code = gr.Code(
+                            label="Please write any notes for your solution here.",
+                            language=None,
+                            lines=46,
                         )
                 with gr.Column(scale=1):
                     end_btn = gr.Button("Finish the interview", interactive=False)
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False)
                     message = gr.Textbox(
                         label="Message",
-                        placeholder="Your message will appear here",
                         show_label=False,
                         lines=3,
                         max_lines=3,
-                        interactive=False,
+                        interactive=True,
+                        container=False,
                     )
                     send_btn = gr.Button("Send", interactive=False)
                     audio_input = gr.Audio(interactive=False, **default_audio_params)
@@ -133,8 +138,9 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
                 fn=lambda: gr.update(interactive=True), outputs=[send_btn]
             ).success(fn=lambda: None, outputs=[audio_input])
 
-        problem_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).success(
-            fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-        )
+        # TODO: add proper messages and clean up when changing the interview type
+        # problem_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).success(
+        #     fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+        # )
 
     return problem_tab
