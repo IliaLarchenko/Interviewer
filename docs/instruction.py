@@ -9,7 +9,9 @@ instruction = {
     "introduction": """
 # Welcome to the AI Mock Interviewer!
 
-This tool is designed to help you practice coding interviews by simulating the real interview experience. Here you can brush your interview skills in a realistic setting, although it’s not intended to replace thorough preparations like studying algorithms or practicing coding problems.
+This tool is designed to help you practice various technical interviews by simulating real interview experiences. 
+Now, you can enhance your skills not only in coding but also in system design, machine learning system design, and other specialized topics. 
+Here you can brush your interview skills in a realistic setting, although it’s not intended to replace thorough preparations like studying algorithms or practicing coding problems.
 
 ## Key Features
 
@@ -19,11 +21,13 @@ This tool is designed to help you practice coding interviews by simulating the r
   - **Speech-to-Text and Text-to-Speech Models**: These help mimic real conversations by converting spoken words to text and vice versa.
 - **Model Flexibility**: The tool works with many different models, including those from OpenAI, open-source models from Hugging Face, and locally running models.
 - **Streaming Mode**: The tool can use all models in streaming mode when it is supported. Instead of waiting for the full response from the AI, you can get partial responses in real-time.
+- **Expanded Interview Coverage**: The tool now supports a variety of interview types, including Coding, System Design, Machine Learning System Design, Math, Stats, and Logic, SQL, and ML Theory interviews.
+
 
 ## Planned Updates
 
 This is just the first beta version, and I'm working on enhancing this tool. Planned updates include:
-1. **More Interview Types**: Adding simulations like Systems Design, Machine Learning System Design, Math and Logic, Behavioral Interviews, and Theory Tests.
+1. **More Interview Types**: More Interview Types: Continue to expand with additional simulations such as Behavioral Interviews and specialized technical interviews.
 2. **Testing More Models**: Exploring additional open-source models to enhance the tool’s performance and flexibility.
 3. **Improving the User Interface**: Making it easier to navigate and use, ensuring a better experience for all users.
     """,
@@ -81,20 +85,24 @@ The application should now be accessible at `http://localhost:7860`.
     "interface": """
 # Interview Interface Overview
 
-This tool will support different types of interviews, but currently focusing on coding interviews only. Here's how to navigate the interface:
+This tool now supports multiple types of interviews, including Coding, System Design, Machine Learning System Design, Math, Stats, and Logic, SQL, and ML Theory. 
+Each type is tailored to help you practice specific skills and knowledge areas. 
+Here's how to navigate the interface:
 
 ### Setting
 Configure the interview settings such as difficulty, topic, and any specific requirements. Start the interview by clicking the **"Generate a problem"** button.
 
 ### Problem Statement
-The AI will present a coding problem after you initiate the session.
+The AI will present a problem after you initiate the session.
 
 ### Solution
 This section is where the interaction happens:
-- **Code Area**: On the left side, you will find a space to write your solution. You can use any programming language, although syntax highlighting is only available for Python currently.
+- **Code/Solution Area**: On the left side, you will find a space to write your solution. For codding problem you can use any language, although syntax highlighting is only available for Python ans SQL currently.
 - **Communication Area**: On the right, this area includes:
   - **Chat History**: Displays the entire dialogue history, showing messages from both you and the AI interviewer.
-  - **Audio Record Button**: Use this button to record your responses. Press to start recording, speak your thoughts, and press stop to send your audio. Your message will be transcribed and added to the chat, along with a snapshot of your code. For code-only messages, type your code and record a brief message like "Check out my code."
+  - **New message text box**: You recognized speech will be shown in this field. You can edit it before sending, but don't care the LLM can handle the text with all the voice recognition mistakes.  
+  - **Send Button**: Use this button to send your message and get the response from the AI.
+  - **Audio Record Button**: Use this button to record your responses. Press to start recording, speak your thoughts, and press stop to send your audio. Your message will be sent to the chat, along with a snapshot of your code or any notes from solution text area."
 
 Engage with the AI as you would with a real interviewer. Provide concise responses and frequent updates rather than long monologues. Your interactions, including any commentary on your code, will be recorded and the AI's responses will be read aloud and displayed in the chat. Follow the AI's instructions and respond to any follow-up questions as they arise.
 
