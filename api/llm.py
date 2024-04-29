@@ -20,7 +20,7 @@ class PromptManager:
         return self.add_limit(prompt)
 
     def get_problem_requirements_prompt(self, type, difficulty=None, topic=None, requirements=None):
-        prompt = f"Create a {difficulty} {topic} {type} problem. " f"Additional requirements: {requirements}. "
+        prompt = f"Create a {type} problem. Difficulty: {difficulty}. Topic: {topic} " f"Additional requirements: {requirements}. "
         return self.add_limit(prompt)
 
 
