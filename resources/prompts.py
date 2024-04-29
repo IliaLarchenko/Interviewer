@@ -209,7 +209,9 @@ Also, evaluate their communication skills in explaining their query choices and 
         base_problem_generation
         + """The type of interview you are generating a problem for is an ML Theory interview.
 Generate a problem that tests the candidate’s understanding of fundamental machine learning concepts and theories.
-The problem should involve scenarios where the candidate needs to choose and justify the appropriate machine learning algorithms, explain model training processes, or discuss model evaluation techniques.
+It is not a ML system design interview, focus on the theoretical aspects of machine learning like: models, validation, data processing, interpretability, etc.
+The problem can involve scenarios where the candidate needs to choose and justify the appropriate machine learning algorithms, explain model training processes, or discuss model evaluation techniques.
+But it should not involve designing a complete machine learning system or architecture.
 Focus on core ML principles, algorithms, and their theoretical underpinnings."""
     ),
     "ml_theory_interviewer_prompt": (
