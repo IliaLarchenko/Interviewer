@@ -158,7 +158,7 @@ class TTSManager:
         headers = {"Authorization": "Bearer " + self.config.tts.key}
         try:
             if self.config.tts.type == "OPENAI_API":
-                data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
+                data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus", "speed": 1.5}
                 response = requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data)
             elif self.config.tts.type == "HF_API":
                 response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
