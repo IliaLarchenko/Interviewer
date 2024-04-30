@@ -102,8 +102,8 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
         ).success(
             fn=llm.init_bot, inputs=[description, interview_type], outputs=[chat_history]
         ).success(
-            fn=lambda: (gr.update(open=True), gr.update(interactive=True), gr.update(interactive=True)),
-            outputs=[solution_acc, end_btn, audio_input],
+            fn=lambda: (gr.update(open=True), gr.update(interactive=True), gr.update(interactive=True), gr.update(interactive=True)),
+            outputs=[solution_acc, end_btn, audio_input, send_btn],
         )
 
         end_btn.click(
@@ -111,8 +111,14 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
             inputs=[chat],
             outputs=[chat],
         ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
-            fn=lambda: (gr.update(open=False), gr.update(interactive=False), gr.update(open=False), gr.update(interactive=False)),
-            outputs=[solution_acc, end_btn, problem_acc, audio_input],
+            fn=lambda: (
+                gr.update(open=False),
+                gr.update(interactive=False),
+                gr.update(open=False),
+                gr.update(interactive=False),
+                gr.update(interactive=False),
+            ),
+            outputs=[solution_acc, end_btn, problem_acc, audio_input, send_btn],
         ).success(
             fn=llm.end_interview, inputs=[description, chat_history, interview_type], outputs=[feedback]
         )
@@ -125,8 +131,6 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
             outputs=[chat_history, chat, previous_code],
         ).success(
             fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-        ).success(
-            fn=lambda: gr.update(interactive=False), outputs=[send_btn]
         ).success(
             fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
         ).success(
