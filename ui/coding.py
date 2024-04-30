@@ -6,7 +6,7 @@ from utils.ui import add_candidate_message, add_interviewer_message
 
 
 def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, name="Coding", interview_type="coding"):
-    with gr.Tab(name, render=False, elem_id=f"{name}_tab") as problem_tab:
+    with gr.Tab(name, render=False, elem_id=f"{interview_type}_tab") as problem_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
         started_coding = gr.State(False)
