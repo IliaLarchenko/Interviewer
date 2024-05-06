@@ -1,0 +1,14 @@
+name: Check file size
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+jobs:
+  check-large-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ActionsDesk/lfs-warning@v2.0
+        with:
+          filesizelimit: 10485760
