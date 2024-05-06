@@ -107,8 +107,7 @@ class LLMManager:
         system_prompt = self.prompt_manager.get_system_prompt(f"{interview_type}_interviewer_prompt")
 
         return [
-            {"role": "system", "content": system_prompt},
-            {"role": "system", "content": f"The candidate is solving the following problem: {problem}"},
+            {"role": "system", "content": system_prompt + f"\nThe candidate is solving the following problem:\n {problem}"},
         ]
 
     def get_problem_prepare_messages(self, requirements, difficulty, topic, interview_type):
