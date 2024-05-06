@@ -51,7 +51,6 @@ This is just the first beta version, and I'm working on enhancing this tool. Pla
 3. **Improving the User Interface**: Making it easier to navigate and use, ensuring a better experience for all users.
     
 
-
 # Running the AI Tech Interviewer Simulator
 
 To get the real experience you should run the service locally and use your own API key or local model.
@@ -63,7 +62,7 @@ To get the real experience you should run the service locally and use your own A
 First, clone the project repository to your local machine with the following commands:
 
 ```bash
-git clone https://huggingface.co/spaces/IliaLarchenko/interviewer
+git clone https://github.com/IliaLarchenko/Interviewer
 cd interviewer
 ```
 
@@ -103,7 +102,6 @@ python app.py
 The application should now be accessible at `http://localhost:7860`.
     
 
-
 # Interview Interface Overview
 
 This tool now supports multiple types of interviews, including Coding, System Design, Machine Learning System Design, Math, Stats, and Logic, SQL, and ML Theory. 
@@ -132,7 +130,6 @@ Once the interview is completed, or if you decide to end it early, click the **"
 ### Feedback
 Detailed feedback will be provided in this section, helping you understand your performance and areas for improvement.  
     
-
 
 # Models Configuration
 
@@ -196,7 +193,6 @@ You can configure each models separately. Find more examples in the `.env.exampl
 
     
 
-
 # Acknowledgements
 
 The service is powered by Gradio, and the demo version is hosted on HuggingFace Spaces.
@@ -208,7 +204,6 @@ Even though the service can be used with great variety of models I want to speci
 
 Please ensure to review the specific documentation and follow the terms of service for each model and API you use, as this is crucial for responsible and compliant use of these technologies.
     
-
 
 # Important Legal and Compliance Information
 

@@ -43,7 +43,7 @@ To get the real experience you should run the service locally and use your own A
 First, clone the project repository to your local machine with the following commands:
 
 ```bash
-git clone https://huggingface.co/spaces/IliaLarchenko/interviewer
+git clone https://github.com/IliaLarchenko/Interviewer
 cd interviewer
 ```
 
@@ -252,4 +252,4 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 
         for key in ("introduction", "quick_start", "interface", "models", "acknowledgements", "legal"):
             f.write(instruction[key])
-            f.write("\n\n")
+            f.write("\n")
