@@ -16,6 +16,9 @@ stt = STTManager(config)
 
 default_audio_params["streaming"] = stt.streaming
 
+if os.getenv("SILENT", False):
+    tts.read_last_message = lambda x: None
+
 # Interface
 
 with gr.Blocks(title="AI Interviewer") as demo:
