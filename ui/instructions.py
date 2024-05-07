@@ -18,13 +18,13 @@ def get_instructions_ui(llm, tts, stt, default_audio_params):
                 space = "&nbsp;" * 10
 
                 tts_status = get_status_color(tts)
-                gr.Markdown(f"TTS status: {tts_status}{space}{tts.config.tts.name}")
+                gr.Markdown(f"TTS status: {tts_status}{space}{tts.config.tts.name}", elem_id="tts_status")
 
                 stt_status = get_status_color(stt)
-                gr.Markdown(f"STT status: {stt_status}{space}{stt.config.stt.name}")
+                gr.Markdown(f"STT status: {stt_status}{space}{stt.config.stt.name}", elem_id="stt_status")
 
                 llm_status = get_status_color(llm)
-                gr.Markdown(f"LLM status: {llm_status}{space}{llm.config.llm.name}")
+                gr.Markdown(f"LLM status: {llm_status}{space}{llm.config.llm.name}", elem_id="llm_status")
 
         gr.Markdown(instruction["quick_start"])
         with gr.Row():
