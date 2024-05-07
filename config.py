@@ -13,7 +13,7 @@ class ServiceConfig:
 
 class Config:
     def __init__(self):
-        load_dotenv()
+        load_dotenv(override=True)
         self.llm = ServiceConfig("LLM_URL", "LLM_TYPE", "LLM_NAME")
         self.stt = ServiceConfig("STT_URL", "STT_TYPE", "STT_NAME")
         self.tts = ServiceConfig("TTS_URL", "TTS_TYPE", "TTS_NAME")
