@@ -141,7 +141,7 @@ class LLMManager:
         chat_history = self.update_chat_history(code, previous_code, chat_history, chat_display)
 
         reply = self.get_text(chat_history)
-        chat_display.append([None, reply])
+        chat_display.append([None, reply.split("#NOTES#")[0].strip()])
         chat_history.append({"role": "assistant", "content": reply})
 
         return chat_history, chat_display, code
@@ -178,7 +178,7 @@ class LLMManager:
             return "No interview history available"
         else:
             messages = self.end_interview_prepare_messages(problem_description, chat_history, interview_type)
-            return self.get_text_stream(messages)
+            return self.get_text(messages)
 
     def end_interview_stream(self, problem_description, chat_history, interview_type="coding"):
         if len(chat_history) <= 2:
