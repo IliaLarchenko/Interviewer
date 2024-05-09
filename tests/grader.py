@@ -6,7 +6,7 @@ from tests.testing_prompts import grader_prompt
 
 
 def grade(json_file_path, model="gpt-4-turbo"):
-    client = OpenAI(url="https://api.openai.com/v1")
+    client = OpenAI(base_url="https://api.openai.com/v1")
 
     with open(json_file_path) as file:
         interview_data = json.load(file)
@@ -32,7 +32,7 @@ def grade(json_file_path, model="gpt-4-turbo"):
     scores = [
         feedback[x]
         for x in feedback
-        if x.startswith("interviewer_") or x.startswith("feedback_") or x.startswith("problem_") and feedback[x] is not None
+        if (x.startswith("interviewer_") or x.startswith("feedback_") or x.startswith("problem_")) and feedback[x] is not None
     ]
     feedback["overall_score"] = sum(scores) / len(scores)
 

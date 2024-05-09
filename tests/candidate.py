@@ -19,7 +19,7 @@ load_dotenv()
 
 
 def complete_interview(interview_type, exp_name, requirements="", difficulty="", topic="", model="gpt-3.5-turbo"):
-    client = OpenAI(url="https://api.openai.com/v1")
+    client = OpenAI(base_url="https://api.openai.com/v1")
     llm = LLMManager(config, prompts)
     llm_name = config.llm.name
 
