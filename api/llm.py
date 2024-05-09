@@ -154,7 +154,7 @@ class LLMManager:
 
         reply = self.get_text_stream(chat_history)
         for message in reply:
-            chat_display[-1][1] = message
+            chat_display[-1][1] = message.split("#NOTES#")[0].strip()
             chat_history[-1]["content"] = message
 
             yield chat_history, chat_display, code
