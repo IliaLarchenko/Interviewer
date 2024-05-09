@@ -13,13 +13,13 @@ from api.llm import LLMManager
 from config import config
 from resources.data import fixed_messages, topic_lists
 from resources.prompts import prompts
-from tests.tessting_prompts import candidate_prompt
+from tests.testing_prompts import candidate_prompt
 
 load_dotenv()
 
 
 def complete_interview(interview_type, exp_name, requirements="", difficulty="", topic="", model="gpt-3.5-turbo"):
-    client = OpenAI()
+    client = OpenAI(url="https://api.openai.com/v1")
     llm = LLMManager(config, prompts)
     llm_name = config.llm.name
 
