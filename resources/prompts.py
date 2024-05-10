@@ -7,7 +7,6 @@ Provide necessary constraints and examples to aid understanding without leading 
 The candidate can provide their solution only in text (including code) or speech form; don't expect any schemas or charts as part of the solution.
 Return only the problem statement in markdown format; refrain from adding any extraneous comments or annotations that are not directly related to the problem itself.
 To ensure clarity, relevance, and accuracy, have problem statements reviewed by multiple experienced interviewers before using them.
-
 """
 
 base_interviewer = """
@@ -39,7 +38,6 @@ To do it use the following format:
 Your hidden notes here - optional, mostly empty'
 Never leave the visible message empty, always add some visible message before #NOTES#. If you have nothing to say but want to make a note, just say "Ok", "Go ahead", "I see", etc.
 Add notes only if necessary.
-
 """
 
 base_grading_feedback = """
@@ -63,7 +61,10 @@ Where relevant, assess if the interviewer provided adequate guidance and probing
 Always ensure your feedback is objective and aligns with the evidence presented during the interview. Avoid generalities and focus on specific incidents or examples from the interview to back up your evaluations.
 Clearly identify when a candidate's response is incomplete or incorrect, and provide the correct solution or a more optimal approach when applicable. This not only clarifies expectations but also aids in candidate development.
 To enhance the efficiency of your feedback, ensure that it is direct and to the point, avoiding unnecessary repetition or summarization that does not add value to the evaluation.
-
+Include specific examples from the interview to illustrate both strengths and weaknesses. Be precise in referencing the parts of the interview or the candidate's responses you are critiquing or praising.
+Provide actionable advice or steps the candidate can take to improve, rather than simply stating what was wrong. This includes suggestions on resources to use, specific areas to study, or practices to adopt.
+Ensure clarity and accuracy in your feedback to avoid confusion and to provide truly useful insights. Double-check that your feedback aligns with the content of the interview and avoid contradicting information.
+Summarize key points at the end of your feedback to highlight critical areas for improvement and notable strengths, providing a clear and concise overview of the candidate’s performance.
 """
 
 base_prompts = {
@@ -115,6 +116,7 @@ Evaluate the candidate’s performance based on the following criteria:
 Use code examples to illustrate points where necessary. If candidate did not complete the problem or the solution is not optimal, provide the code of the optimal solution.
 Offer constructive and targeted feedback on strengths and areas for improvement while avoiding repetition of candidate responses.
 Emphasize on providing constructive feedback with specific examples from the code written during the interview, and ensure to offer corrections or better alternatives to foster candidate learning.
+Recap the coding interview by summarizing the critical mistakes and successful strategies used by the candidate, reinforcing both their errors and what they managed effectively.
 """
     ),
     "ml_design_problem_generation_prompt": (
@@ -165,6 +167,8 @@ Evaluate how thoroughly the candidate has addressed each component of the machin
 Provide specific examples from the interview to highlight areas of strength and weakness, suggesting improvements where necessary.
 Provide actionable feedback, focusing on specific examples of strengths and weaknesses, while offering guidance for further improvement.
 Include specific feedback on each component of the machine learning system discussed, and point out not only the weaknesses but also provide clear recommendations for improvement.
+Clearly indicate any points of confusion or ambiguity in the candidate's explanation during the interview and provide correct explanations to ensure accurate understanding and learning.
+Summarize the key strengths and weaknesses at the end of your feedback to reinforce learning and make the feedback more accessible.
 """
     ),
     "system_design_problem_generation_prompt": (
@@ -210,6 +214,8 @@ Evaluate the candidate based on their ability to:
 Provide specific examples from the interview to highlight strengths and areas for improvement, ensuring feedback is detailed and actionable.
 Offer precise and constructive feedback that highlights technical strengths and gaps while providing specific examples.
 Ensure that your feedback reflects all aspects of system design evaluated during the interview, from API design to scalability, noting both strengths and areas of improvement in a balanced manner.
+Be explicit in highlighting which system design principles were well understood and which were not, with suggestions on how the candidate can deepen their understanding or correct misconceptions.
+Offer a recap section that outlines the major takeaways from the system design discussion to clarify and reinforce learning summarily.
 """
     ),
     "math_problem_generation_prompt": (
@@ -240,6 +246,8 @@ Evaluate how effectively the candidate communicates complex ideas and whether th
 Highlight any areas where their understanding may be lacking or where their explanations could be clearer.
 If the candidate's approach is suboptimal, provide an alternative solution while offering actionable feedback for improvement.Deliver targeted feedback highlighting specific examples of strong and weak problem-solving approaches, offering suggestions for improvement.
 Directly address any incorrect assumptions or errors in calculation, providing the correct method or theory, thus ensuring candidates have a clear understanding of where their reasoning went wrong.
+Provide detailed explanations for any incorrect mathematical or logical reasoning, including the right methods or theories, to ensure the candidate understands their mistakes clearly.
+Conclude with a concise summary of the candidate’s performance highlighting their strengths and areas needing attention.
 """
     ),
     "sql_problem_generation_prompt": (
@@ -273,6 +281,8 @@ Also, evaluate their communication skills in explaining their query choices and 
 Provide a comprehensive alternative solution if their approach is lacking, and offer actionable feedback to improve their performance.
 Provide detailed and actionable feedback that emphasizes technical strengths while giving examples for improvement.
 Highlight efficiency and correctness in SQL queries specifically, clarifying any misconceptions or errors in query formulation and suggesting optimal solutions where necessary.
+Address any discrepancies between your feedback and the candidate's SQL script clearly, fixing any incorrect assertions or misunderstandings.
+Recap the main points regarding query efficiency and correctness to solidify the feedback’s impact.
 """
     ),
     "ml_theory_problem_generation_prompt": (
@@ -310,6 +320,8 @@ Encourage comprehensive exploration of ML theory topics while dynamically adapti
 - Ensure that the feedback is actionable and realistic within the interview scope and provides meaningful insights for improvement.
 Ensure feedback is specific and actionable, providing additional resources or techniques to help candidates improve.
 Be explicit about the theoretical inaccuracies or gaps in understanding demonstrated by the candidate, and recommend specific resources or study materials to help overcome these deficiencies.
+Be specific when discussing theoretical inaccuracies or gaps, suggesting targeted resources or areas of study to bridge these gaps effectively.
+Summarize critical feedback points clearly at the end, focusing on practical steps for improvement and further learning.
 """
     ),
 }
