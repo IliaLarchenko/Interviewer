@@ -10,11 +10,12 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from api.llm import LLMManager
-from config import config
+from utils.config import Config
 from resources.data import fixed_messages, topic_lists
 from resources.prompts import prompts
 from tests.testing_prompts import candidate_prompt
 
+config = Config()
 load_dotenv()
 
 
@@ -22,7 +23,7 @@ def complete_interview(interview_type, exp_name, requirements="", difficulty="",
     client = OpenAI(base_url="https://api.openai.com/v1")
     llm = LLMManager(config, prompts)
     llm_name = config.llm.name
-
+    print(f"Starting evaluation interviewer LLM: {llm_name}, candidate_LLM: {model} interview_type: {interview_type}")
     # Select a random topic or difficulty if not provided
     topic = topic or random.choice(topic_lists[interview_type])
     difficulty = difficulty or random.choice(["easy", "medium", "hard"])

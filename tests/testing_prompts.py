@@ -54,3 +54,11 @@ You should evaluate the following aspects and return a JSON with these keys:
 
 Return just True, False, or None (if no info was provided) for each key except "comments", "comments" is string.
 """
+
+
+feedback_analyzer = f"""You are analyzing the feedback from a series of interviews.
+You goal is to improve the quality of the interviews, and structure the main problems and mistakes interviewers are making.
+Below are some comments based on the feedback from the interviews.
+Summarize them, find the main patterns, repeated mistakes and ares for improvement.
+Return TOP-5 problems/improvements/action steps.
+"""
