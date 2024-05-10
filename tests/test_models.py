@@ -2,7 +2,7 @@ import pytest
 
 from api.audio import STTManager, TTSManager
 from api.llm import LLMManager
-from config import Config
+from utils.config import Config
 
 # Simple placeholder tests so far
 # TODO: add more tests including LLM based

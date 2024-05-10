@@ -4,12 +4,13 @@ import gradio as gr
 
 from api.audio import STTManager, TTSManager
 from api.llm import LLMManager
-from config import config
+from utils.config import Config
 from resources.prompts import prompts
 from ui.coding import get_problem_solving_ui
 from ui.instructions import get_instructions_ui
 from utils.params import default_audio_params
 
+config = Config()
 llm = LLMManager(config, prompts)
 tts = TTSManager(config)
 stt = STTManager(config)
