@@ -131,8 +131,11 @@ class LLMManager:
 
     def update_chat_history(self, code, previous_code, chat_history, chat_display):
         message = chat_display[-1][0]
+
         if code != previous_code:
-            chat_history.append({"role": "user", "content": f"My latest solution:\n{code}"})
+            message += "\nMY ILLUSTRATIONS AND CODE:\n"
+            message += code
+
         chat_history.append({"role": "user", "content": message})
 
         return chat_history
