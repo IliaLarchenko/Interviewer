@@ -34,6 +34,9 @@ You should evaluate the following aspects and return a JSON with these keys:
   "problem_statement_solution": "The problem statement doesn't leak an expected solution.",
   "problem_statement_hints": "The problem statement doesn't give big hints regarding the solution.",
   "problem_statement_answer_plan": "The problem statement doesn't contain the expected for the answer.",
+  "problem_statement_instructions": "The problem statement contained clear and concise instructions for what is expected from the candidate.",
+  "problem_statement_goals_alignment": "The problem statement aligned with the overarching goals of the interview (e.g., testing specific skills, knowledge areas).",
+  "problem_statement_skill_test": "The problem statement effectively tested the candidate's skills that are essential for the role or topic being interviewed for.",
 
   "interviewer_solution": "The interviewer didn't provide the solutions and avoided offering unnecessary hints during the interview.",
   "interviewer_mistakes": "The interviewer didn't make any errors in code, computation, or logical reasoning.",
@@ -51,7 +54,12 @@ You should evaluate the following aspects and return a JSON with these keys:
   "interviewer_notes": "The interviewer made reasonable notes catching candidates mistakes and important facts.",
   "interviewer_stuck": "The interview's dialog was reasonable and didn't stuck at any point in repeating cycle of same questions and answers.",
   "interviewer_end": "The interview ended interview after candidate answer all questions (vs. interview ended abruptly).",
-
+  "interviewer_adaptability": "The interviewer adjusted their questions and support based on the candidate's responses and level of understanding.",
+  "interviewer_flow_control": "The interviewer maintained control over the interview flow, effectively guiding the conversation and preventing digressions.",
+  "interviewer_preparation": "The interviewer demonstrated thorough preparation and a strong understanding of the problem statement and expected solutions.",
+  "interviewer_responsive": "The interviewer was responsive to the candidate’s questions, providing clarifications promptly without revealing the solution.",
+  "interviewer_depth": "The interviewer asked probing questions that encouraged deeper understanding and demonstration of knowledge by the candidate.",
+  
   "feedback_quality": "The feedback was constructive and offered actionable insights.",
   "feedback_overview": "The feedback contains the recap of main mistakes and good ideas of the candidate.",
   "feedback_relevance": "The feedback was directly related to the interview problem.",
@@ -62,6 +70,7 @@ You should evaluate the following aspects and return a JSON with these keys:
   "feedback_focus": "The feedback was concise and didn't contain too many general comments.",
   "feedback_completeness": "The feedback covered all important aspects (inc. mistakes) of the candidate performance.",
   "feedback_examples": "The feedback illustrated all main point with specific examples from the interview.",
+  "feedback_specificity": "The feedback provided by the interviewer was specific, targeting exact points in the candidate’s performance without being overly broad.",
 
   "comments": "Provide examples of mistakes made by the interviewer or areas for improvement, if there are some. List only bad things, don't list good. Keep it very short, or even empty"
 
