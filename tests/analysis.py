@@ -89,9 +89,9 @@ def generate_and_display_tables(df):
     grouped_by_type_styled = grouped_by_type.style.map(highlight_color)
     grouped_by_type_styled.set_caption("Scores Grouped by Unique Type")
 
-    # Grouped by unique interviewer model and sorted by descending total score
     total_llm_scores = df.groupby("agent_llm")[prefix_columns].mean().mean(axis=1).sort_values(ascending=False)
-    grouped_by_interviewer = pd.DataFrame(total_llm_scores, columns=["avg score"])
+    # Grouped by unique interviewer model and sorted by descending total score
+    grouped_by_interviewer = df.groupby("agent_llm")[["overall_score", "average_response_time_seconds", "number_of_messages"]].mean()
     grouped_by_interviewer_styled = grouped_by_interviewer.style.map(highlight_color)
     grouped_by_interviewer_styled.set_caption("Scores Grouped by Unique Interviewer Model")
 
