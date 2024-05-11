@@ -31,6 +31,9 @@ You should evaluate the following aspects and return a JSON with these keys:
   "problem_statement_solvability": "The problem could be solved within the allotted 30-minute time frame.",
   "problem_statement_relevance": "The problem was pertinent to the specific type of interview.",
   "problem_statement_mistakes": "The problem statement contained no errors or inaccuracies (e.g., in provided examples).",
+  "problem_statement_solution": "The problem statement doesn't leak an expected solution.",
+  "problem_statement_hints": "The problem statement doesn't give big hints regarding the solution.",
+  "problem_statement_answer_plan": "The problem statement doesn't contain the expected for the answer.",
 
   "interviewer_solution": "The interviewer didn't provide the solutions and avoided offering unnecessary hints during the interview.",
   "interviewer_mistakes": "The interviewer didn't make any errors in code, computation, or logical reasoning.",
@@ -56,8 +59,16 @@ You should evaluate the following aspects and return a JSON with these keys:
   "feedback_solution": "The feedback included the correct solution if the candidate was unable to solve the problem.",
   "feedback_result": "The feedback accurately reflected the candidate's performance.",
   "feedback_hallucinations": "The feedback didn't contain any non-relevant information.",
+  "feedback_focus": "The feedback was concise and didn't contain too many general comments.",
+  "feedback_completeness": "The feedback covered all important aspects (inc. mistakes) of the candidate performance.",
+  "feedback_examples": "The feedback illustrated all main point with specific examples from the interview.",
 
   "comments": "Provide examples of mistakes made by the interviewer or areas for improvement, if there are some. List only bad things, don't list good. Keep it very short, or even empty"
+
+  
+All keys starting from "problem_" should evaluate only the initial part of the interview - the problem generation.
+All keys starting from "interviewer_" should evaluate only the transcript of the interview - when the interviewer was communicating withe the candidate.
+All keys starting from "feedback_" should evaluate only the last part of the interview - the feedback provided to the candidate in the very end.
 
 Return just True, False, or None (if no info was provided) for each key except "comments", "comments" is string.
 True is always a positive score, False is negative.
