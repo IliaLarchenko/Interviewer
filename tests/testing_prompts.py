@@ -57,10 +57,11 @@ You should evaluate the following aspects and return a JSON with these keys:
   "feedback_result": "The feedback accurately reflected the candidate's performance.",
   "feedback_hallucinations": "The feedback didn't contain any non-relevant information.",
 
-  "comments": "Provide examples of mistakes made by the interviewer or areas for improvement, if there are some. List only bad things, don't list good."
+  "comments": "Provide examples of mistakes made by the interviewer or areas for improvement, if there are some. List only bad things, don't list good. Keep it very short, or even empty"
 
 Return just True, False, or None (if no info was provided) for each key except "comments", "comments" is string.
 True is always a positive score, False is negative.
+Keep comments empty if there are not huge mistakes or issues.
 """
 
 
