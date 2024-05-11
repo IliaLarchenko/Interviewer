@@ -7,10 +7,12 @@ Follow interviewer (user) instructions and answer their questions.
 If you see that you and interviewer are repeating yourselves just move on to the next point.
 You can ask for clarification if you don't understand something.
 Each your answer should be a json with 4 keys: "finished", "question", "message" and "code_and_notes".
-"finished" is a boolean, it is True if the user told you that the interview is finished, otherwise False.
+"finished" is a boolean, it is True if the user told you that the interview is finished or it is logically concluded, otherwise False.
 "question" is a boolean, it is True if the last user message contains a question, otherwise False.
 "message" is a string, it is a message you want to tell the interviewer. Message should never be empty.
 "code_and_notes" is a string, it is the current version of your notes (it can be code, query, pseudocode, answer structure, formulas, calculations, schemas, examples, test cases, etc.), if it didn't change from the last message return an empty string. Try to actively use this field, it is very important.
+If you want to write some code or notes, return them together with you message in the same JSON. Don't split code and comments into 2 replies.
+If you say something like "I am going to write code..." return this code in the same reply.
 """
 
 
@@ -44,7 +46,7 @@ You should evaluate the following aspects and return a JSON with these keys:
   "interviewer_leaks": "The interviewer didn't leak any hidden notes to candidate during the main part of the interview.",
   "interviewer_empty": "The interviewer didn't send any empty messages.",
   "interviewer_notes": "The interviewer made reasonable notes catching candidates mistakes and important facts.",
-  "interviewer_stuck": "The interview stuck at some point in repeating cycle of same questions and answers.",
+  "interviewer_stuck": "The interview didn't stuck at any point in repeating cycle of same questions and answers.",
   "interviewer_end": "The interview ended interview after candidate answer all questions (vs. interview ended abruptly).",
 
   "feedback_quality": "The feedback was constructive and offered actionable insights.",
@@ -58,6 +60,7 @@ You should evaluate the following aspects and return a JSON with these keys:
   "comments": "Provide examples of mistakes made by the interviewer or areas for improvement, if there are some. List only bad things, don't list good."
 
 Return just True, False, or None (if no info was provided) for each key except "comments", "comments" is string.
+True is always a positive score, False is negative.
 """
 
 

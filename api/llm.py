@@ -133,7 +133,7 @@ class LLMManager:
         message = chat_display[-1][0]
 
         if code != previous_code:
-            message += "\nMY ILLUSTRATIONS AND CODE:\n"
+            message += "\nMY NOTES AND CODE:\n"
             message += code
 
         chat_history.append({"role": "user", "content": message})

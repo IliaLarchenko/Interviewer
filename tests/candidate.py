@@ -94,12 +94,11 @@ def complete_interview(interview_type, exp_name, requirements="", difficulty="",
         messages_candidate.append({"role": "user", "content": chat_display[-1][1]})
 
         message_split = messages_interviewer[-1]["content"].split("#NOTES#")
-        interviewer_answer = message_split[0]
-        interview_data["transcript"].append(f"INTERVIEWER MESSAGE: {interviewer_answer}")
+        print(len(message_split))
+        interview_data["transcript"].append(f"INTERVIEWER MESSAGE: {message_split[0]}")
 
         if len(message_split) > 1:
-            interviewer_note = message_split[1]
-            interview_data["transcript"].append(f"INTERVIEWER HIDDEN NOTE: {interviewer_note}")
+            interview_data["transcript"].append(f"INTERVIEWER HIDDEN NOTE: {message_split[1]}")
 
     interview_data["feedback"] = llm.end_interview_full(problem_statement_text, messages_interviewer, interview_type)
     interview_data["average_response_time_seconds"] = round(sum(response_times) / len(response_times), 2) if response_times else 0
