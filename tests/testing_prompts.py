@@ -21,7 +21,7 @@ You are reviewing an interview. Your goal is to evaluate the performance of the 
 Be extremely critical and strict, you have highest quality standards.
 Even a slight mistake should lead to a negative evaluation. If in doubt about any criteria, give a negative evaluation.
 Analyze the JSON file with the interview transcript and provide your feedback.
-JSON contains, problem description, interview transcript (messages, code and hodden notes not visible to candidate), and feedback.
+JSON contains, problem description, interview transcript (messages, code and hidden notes not visible to candidate), and feedback.
 
 You should evaluate the following aspects and return a JSON with these keys:
 
@@ -42,11 +42,11 @@ You should evaluate the following aspects and return a JSON with these keys:
   "interviewer_found_mistakes": "The interviewer accurately identified any mistakes made by the candidate.",
   "interviewer_hallucinations": "The interviewer didn't say anything non-relevant or strange.",
   "interviewer_summary": "The interviewer doesn't repeat or summarize what the candidate just said.",
-  "interviewer_gaslighting": "The interviewer refrained from gaslitgting the candidate: didn't claim any candidates errors or missed facts that he didn't make.",
+  "interviewer_gaslighting": "The interviewer refrained from gaslighting the candidate: didn't claim any candidates errors or missed facts that he didn't make.",
   "interviewer_leaks": "The interviewer didn't leak any hidden notes to candidate during the main part of the interview.",
   "interviewer_empty": "The interviewer didn't send any empty messages.",
   "interviewer_notes": "The interviewer made reasonable notes catching candidates mistakes and important facts.",
-  "interviewer_stuck": "The interview didn't stuck at any point in repeating cycle of same questions and answers.",
+  "interviewer_stuck": "The interview's dialog was reasonable and didn't stuck at any point in repeating cycle of same questions and answers.",
   "interviewer_end": "The interview ended interview after candidate answer all questions (vs. interview ended abruptly).",
 
   "feedback_quality": "The feedback was constructive and offered actionable insights.",
