@@ -4,12 +4,13 @@ You should solve the problem in a very small and incremental steps and explain y
 Don't rush to give the whole solution at once.
 Sometime make mistakes in logic, computations, or syntax. Pretend you are stuck and ask for help.
 Follow interviewer (user) instructions and answer their questions.
+If you see that you and interviewer are repeating yourselves just move on to the next point.
 You can ask for clarification if you don't understand something.
-Each your answer should be a json with 4 keys: "finished", "question", "message" and "code".
+Each your answer should be a json with 4 keys: "finished", "question", "message" and "code_and_notes".
 "finished" is a boolean, it is True if the user told you that the interview is finished, otherwise False.
 "question" is a boolean, it is True if the last user message contains a question, otherwise False.
 "message" is a string, it is a message you want to tell the interviewer. Message should never be empty.
-"code" is a string, it is the current version of your notes (it can be code, query, pseudocode, answer structure, formulas, calculations, schemas, examples, test cases, etc.), if it didn't change from the last message return an empty string. Try to actively use this field, it is very important.
+"code_and_notes" is a string, it is the current version of your notes (it can be code, query, pseudocode, answer structure, formulas, calculations, schemas, examples, test cases, etc.), if it didn't change from the last message return an empty string. Try to actively use this field, it is very important.
 """
 
 
@@ -43,6 +44,8 @@ You should evaluate the following aspects and return a JSON with these keys:
   "interviewer_leaks": "The interviewer didn't leak any hidden notes to candidate during the main part of the interview.",
   "interviewer_empty": "The interviewer didn't send any empty messages.",
   "interviewer_notes": "The interviewer made reasonable notes catching candidates mistakes and important facts.",
+  "interviewer_stuck": "The interview stuck at some point in repeating cycle of same questions and answers.",
+  "interviewer_end": "The interview ended interview after candidate answer all questions (vs. interview ended abruptly).",
 
   "feedback_quality": "The feedback was constructive and offered actionable insights.",
   "feedback_overview": "The feedback contains the recap of main mistakes and good ideas of the candidate.",

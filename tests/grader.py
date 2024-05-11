@@ -11,10 +11,21 @@ def grade(json_file_path, model="gpt-4-turbo"):
     with open(json_file_path) as file:
         interview_data = json.load(file)
 
+    interview_summary_list = []
+    interview_summary_list.append(f"Interview type: {interview_data['inputs']['interview_type']}")
+    interview_summary_list.append(f"Interview difficulty: {interview_data['inputs']['difficulty']}")
+    interview_summary_list.append(f"Interview topic: {interview_data['inputs']['topic']}")
+    if interview_data["inputs"]["requirements"] != "":
+        interview_summary_list.append(f"Interview requirements: {interview_data['inputs']['requirements']}")
+    interview_summary_list.append(f"Problem statement proposed by interviewer: {interview_data['problem_statement']}")
+    interview_summary_list.append(f"\nTranscript of the whole interview below:")
+    interview_summary_list += interview_data["transcript"]
+    interview_summary_list.append(f"\nTHE MAIN PART OF THE INTERVIEW ENDED HERE.")
+    interview_summary_list.append(f"Feedback provided by interviewer: {interview_data['feedback']}")
+
     messages = [
         {"role": "system", "content": grader_prompt},
-        {"role": "user", "content": f"Interview data: {interview_data}"},
-        {"role": "user", "content": "Please evaluate the interview."},
+        {"role": "user", "content": f"Please evaluate the interviewer based on the following data: \n {'\n'.join(interview_summary_list)}"},
     ]
 
     response = client.chat.completions.create(model=model, messages=messages, temperature=1, response_format={"type": "json_object"})

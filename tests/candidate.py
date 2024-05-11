@@ -67,7 +67,7 @@ def complete_interview(interview_type, exp_name, requirements="", difficulty="",
         )
         response_json = json.loads(response.choices[0].message.content)
 
-        code = response_json.get("code", "")
+        code = response_json.get("code_and_notes", "")
         candidate_message = response_json.get("message", "")
 
         if not code and not candidate_message:
@@ -77,7 +77,7 @@ def complete_interview(interview_type, exp_name, requirements="", difficulty="",
         messages_candidate.append({"role": "assistant", "content": response.choices[0].message.content})
 
         if code:
-            interview_data["transcript"].append(f"CANDIDATE CODE: {code}")
+            interview_data["transcript"].append(f"CANDIDATE CODE AND NOTES: {code}")
         elif candidate_message:
             interview_data["transcript"].append(f"CANDIDATE MESSAGE: {candidate_message}")
 
