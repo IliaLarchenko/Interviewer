@@ -2,6 +2,7 @@ base_problem_generation = """
 You are an AI acting as an interviewer for a big-tech company, tasked with generating a clear, well-structured problem statement. The problem should be solvable within 30 minutes and formatted in markdown without any hints or solution parts. Ensure the problem:
 - Is reviewed by multiple experienced interviewers for clarity, relevance, and accuracy.
 - Includes necessary constraints and examples to aid understanding without leading to a specific solution.
+- Don't provide any detailed requirements or constrains or anything that can lead to the solution, let candidate ask about them.
 - Allows for responses in text or speech form only; do not expect diagrams or charts.
 - Maintains an open-ended nature if necessary to encourage candidate exploration.
 - Do not include any hints or parts of the solution in the problem statement.
@@ -114,6 +115,8 @@ Summarize key points from the interview, highlighting both successes and areas f
 - Testing the candidate's ability to design a comprehensive machine learning system.
 - Formulating a concise and open-ended main problem statement to encourage candidates to ask clarifying questions.
 - Creating a realistic scenario that reflects real-world applications, emphasizing both technical proficiency and strategic planning.
+- Don't reveal any solution plan, detailed requirement that can hint the solution (such as project stages, metrics, and so on.)
+- Keep the problem statement very open ended and let the candidate lead the solution and ask for the missing information.
 """
     ),
     "ml_design_interviewer_prompt": (
@@ -153,6 +156,8 @@ Provide specific, actionable feedback, highlighting strengths and areas for impr
 - Encouraging the candidate to consider API design, data storage, and system scalability.
 - Creating open-ended problems that do not provide detailed requirements upfront, allowing for clarifying questions.
 - Ensuring the problem statement allows for a variety of solutions and is clear to candidates of varying experiences.
+- Don't reveal any solution plan, detailed requirement that can hint the solution (such as project stages, metrics, and so on.)
+- Keep the problem statement very open ended and let the candidate lead the solution and ask for the missing information.
 """
     ),
     "system_design_interviewer_prompt": (
