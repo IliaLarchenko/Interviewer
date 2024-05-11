@@ -94,7 +94,6 @@ def complete_interview(interview_type, exp_name, requirements="", difficulty="",
         messages_candidate.append({"role": "user", "content": chat_display[-1][1]})
 
         message_split = messages_interviewer[-1]["content"].split("#NOTES#")
-        print(len(message_split))
         interview_data["transcript"].append(f"INTERVIEWER MESSAGE: {message_split[0]}")
 
         if len(message_split) > 1:
