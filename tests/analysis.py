@@ -69,6 +69,10 @@ def generate_and_display_tables(df):
     prefixes = ["problem", "interviewer", "feedback"]
     prefix_columns = [col for col in df.columns if any(col.startswith(prefix) for prefix in prefixes)]
 
+    criteria_summary_df = pd.DataFrame(df[prefix_columns].mean(), columns=["avg score"])
+    criteria_summary_df_styled = criteria_summary_df.style.map(highlight_color)
+    criteria_summary_df_styled.set_caption("Aggregated Scores per Criteria")
+
     # Aggregated scores per stage
     grouped_scores = {}
     for prefix in prefixes:
@@ -127,6 +131,7 @@ def generate_and_display_tables(df):
     pivot4_styled.set_caption("Pivot Table: Agent Model x Stage vs Type")
 
     tables_dict = {
+        "criteria_summary_df_styled": criteria_summary_df_styled,
         "grouped_scores_styled": grouped_scores_styled,
         "grouped_by_type_styled": grouped_by_type_styled,
         "grouped_by_interviewer_styled": grouped_by_interviewer_styled,
