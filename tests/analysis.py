@@ -16,50 +16,113 @@ from openai import OpenAI
 from tests.testing_prompts import feedback_analyzer
 from resources.prompts import prompts, base_prompts
 
+criteria_list = {
+    "problem_statement",
+    "problem_statement_difficulty",
+    "problem_statement_topic",
+    "problem_statement_solvability",
+    "problem_statement_relevance",
+    "problem_statement_mistakes",
+    "problem_statement_solution",
+    "problem_statement_hints",
+    "problem_statement_answer_plan",
+    "problem_statement_instructions",
+    "problem_statement_goals_alignment",
+    "problem_statement_skill_test",
+    "interviewer_solution",
+    "interviewer_mistakes",
+    "interviewer_answers",
+    "interviewer_relevance",
+    "interviewer_support",
+    "interviewer_questions",
+    "interviewer_repeat",
+    "interviewer_found_mistakes",
+    "interviewer_hallucinations",
+    "interviewer_summary",
+    "interviewer_gaslighting",
+    "interviewer_leaks",
+    "interviewer_empty",
+    "interviewer_notes",
+    "interviewer_stuck",
+    "interviewer_end",
+    "interviewer_adaptability",
+    "interviewer_flow_control",
+    "interviewer_preparation",
+    "interviewer_responsive",
+    "interviewer_depth",
+    "feedback_quality",
+    "feedback_overview",
+    "feedback_relevance",
+    "feedback_clarity",
+    "feedback_solution",
+    "feedback_result",
+    "feedback_hallucinations",
+    "feedback_focus",
+    "feedback_completeness",
+    "feedback_examples",
+    "feedback_specificity",
+    "comments",
+}
 
-def complete_and_grade(interview_params, exp_name="GPT4", grader_model="gpt-4-turbo", candidate_model="gpt-3.5-turbo"):
-    interview_type, attempt_num = interview_params
-    feedback = {}
 
+def grade_attempt(file_path, grader_model, attempt_index):
+    for retry in range(3):  # Retry mechanism
+        try:
+            feedback = grade(file_path, grader_model, str(attempt_index))
+            if np.mean([x in criteria_list for x in feedback.keys()]) > 0.8:
+                return feedback
+        except Exception as e:
+            print(f"The {retry+1} attempt to grade using {grader_model} failed with error {e}")
+    return None
+
+
+def complete_and_grade(interview_params, exp_name, grader_models, candidate_model):
+    interview_type, attempt_num, llm_config = interview_params
     try:
-        file_path, _ = complete_interview(interview_type, exp_name, model=candidate_model)
-        feedback = grade(file_path, grader_model)
-
-        # Just a heuristic check of the JSON format TODO: add a proper check
-        if "problem_statement_topic" not in feedback:
-            raise Exception("Grading failed")
-
+        file_path, _ = complete_interview(interview_type, exp_name, llm_config, model=candidate_model)
         print(f"Attempt {attempt_num + 1} of {interview_type} completed successfully")
-        print(f"Overall score: {feedback['overall_score']}")
+
+        feedback_list = []
+        for i, grader_model in enumerate(grader_models):
+            feedback = grade_attempt(file_path, grader_model, i)
+            if feedback:
+                feedback_list.append(feedback)
+                print(f"Attempt {attempt_num + 1} of {interview_type} by {llm_config.name} graded by {grader_model} successfully")
+                print(f"Overall score: {feedback['overall_score']}")
 
     except Exception as e:
         print(f"Attempt {attempt_num + 1} of {interview_type} failed with error: {e}")
 
-    return feedback
+    if len(feedback_list) == 0:
+        print(f"Attempt {attempt_num + 1} of {interview_type} returned an empty list")
+
+    return feedback_list
 
 
 def run_evaluation(
-    exp_name,
-    num=5,
-    interview_types=["ml_design", "math", "ml_theory", "system_design", "sql", "coding"],
-    grader_model="gpt-4-turbo",
-    candidate_model="gpt-3.5-turbo",
-    num_workers=3,
+    exp_name, num_attempts=5, interview_types=None, grader_models=None, llm_configs=None, candidate_model="gpt-3.5-turbo", num_workers=3
 ):
+    if interview_types is None:
+        interview_types = ["ml_design", "math", "ml_theory", "system_design", "sql", "coding"]
+    if grader_models is None:
+        grader_models = ["gpt-4-turbo"]
+    if llm_configs is None:
+        llm_configs = [None]
+
     exp_name = f"{exp_name}_{pd.Timestamp.now().strftime('%Y-%m-%d_%H-%M-%S')}"
     os.makedirs(f"records/{exp_name}", exist_ok=True)
-    tasks = [(interview_type, i) for i in range(num) for interview_type in interview_types]
-    complete_f = partial(complete_and_grade, exp_name=exp_name, grader_model=grader_model, candidate_model=candidate_model)
+    tasks = [(type_, i, llm_config) for type_ in interview_types for i in range(num_attempts) for llm_config in llm_configs]
+    complete_f = partial(complete_and_grade, exp_name=exp_name, grader_models=grader_models, candidate_model=candidate_model)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
         results = list(executor.map(complete_f, tasks))
 
-    # Filter out empty results and count them
+    # Filter out empty results
     non_empty_results = [res for res in results if res]
     empty_count = len(results) - len(non_empty_results)
-
     print(f"Number of empty results (errors or failed grading): {empty_count}")
 
-    # Store non-empty results in a DataFrame
+    non_empty_results = [f for res in non_empty_results for f in res]
     df = pd.DataFrame(non_empty_results)
     df.to_csv(os.path.join("records", exp_name, "results.csv"), index=False)
 
