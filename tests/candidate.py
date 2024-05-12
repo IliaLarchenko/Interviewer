@@ -6,7 +6,6 @@ import time
 
 from collections import defaultdict
 
-from dotenv import load_dotenv
 from openai import OpenAI
 
 from api.llm import LLMManager
@@ -15,12 +14,12 @@ from resources.data import fixed_messages, topic_lists
 from resources.prompts import prompts
 from tests.testing_prompts import candidate_prompt
 
-config = Config()
-load_dotenv()
 
-
-def complete_interview(interview_type, exp_name, requirements="", difficulty="", topic="", model="gpt-3.5-turbo"):
+def complete_interview(interview_type, exp_name, llm_config=None, requirements="", difficulty="", topic="", model="gpt-3.5-turbo"):
     client = OpenAI(base_url="https://api.openai.com/v1")
+    config = Config()
+    if llm_config:
+        config.llm = llm_config
     llm = LLMManager(config, prompts)
     llm_name = config.llm.name
     print(f"Starting evaluation interviewer LLM: {llm_name}, candidate_LLM: {model} interview_type: {interview_type}")
