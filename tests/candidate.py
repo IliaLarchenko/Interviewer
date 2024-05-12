@@ -15,7 +15,7 @@ from resources.prompts import prompts
 from tests.testing_prompts import candidate_prompt
 
 
-def complete_interview(interview_type, exp_name, llm_config=None, requirements="", difficulty="", topic="", model="gpt-3.5-turbo"):
+def complete_interview(interview_type, exp_name, llm_config=None, requirements="", difficulty="", topic="", model="gpt-3.5-turbo", pause=0):
     client = OpenAI(base_url="https://api.openai.com/v1")
     config = Config()
     if llm_config:
@@ -97,6 +97,8 @@ def complete_interview(interview_type, exp_name, llm_config=None, requirements="
 
         if len(message_split) > 1:
             interview_data["transcript"].append(f"INTERVIEWER HIDDEN NOTE: {message_split[1]}")
+
+        time.sleep(pause)  # to prevent exceeding rate limits
 
     interview_data["feedback"] = llm.end_interview_full(problem_statement_text, messages_interviewer, interview_type)
     interview_data["average_response_time_seconds"] = round(sum(response_times) / len(response_times), 2) if response_times else 0

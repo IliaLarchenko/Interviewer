@@ -80,9 +80,23 @@ def complete_and_grade(interview_params, exp_name, grader_models, candidate_mode
     interview_type, attempt_num, llm_config = interview_params
 
     feedback_list = []
+    attempt_successful = False
+    for attempt in range(3):  # Retry up to 3 times
+        try:
+            file_path, _ = complete_interview(interview_type, exp_name, llm_config, model=candidate_model, pause=attempt * 5)
+            print(
+                f"Attempt {attempt_num + 1}, retry {attempt + 1} interview simulation of {interview_type} by {llm_config.name} completed successfully"
+            )
+            attempt_successful = True
+            break
+        except Exception as e:
+            print(f"Retry {attempt + 1} for attempt {attempt_num + 1} of {interview_type} by {llm_config.name} failed with error: {e}")
+
+    if not attempt_successful:
+        print(f"All retries failed for attempt {attempt_num + 1} of {interview_type} by {llm_config.name}")
+        return feedback_list
+
     try:
-        file_path, _ = complete_interview(interview_type, exp_name, llm_config, model=candidate_model)
-        print(f"Attempt {attempt_num + 1} interview simulation of {interview_type} by {llm_config.name} completed successfully")
         for i, grader_model in enumerate(grader_models):
             feedback = grade_attempt(file_path, grader_model, i)
             if feedback:
@@ -91,7 +105,7 @@ def complete_and_grade(interview_params, exp_name, grader_models, candidate_mode
                 print(f"Overall score: {feedback['overall_score']}")
 
     except Exception as e:
-        print(f"Attempt {attempt_num + 1} of {interview_type} by {llm_config.name} failed with error: {e}")
+        print(f"Grading for attempt {attempt_num + 1} of {interview_type} by {llm_config.name} failed with error: {e}")
 
     if len(feedback_list) == 0:
         print(f"Attempt {attempt_num + 1} of {interview_type} by {llm_config.name} returned an empty list")
