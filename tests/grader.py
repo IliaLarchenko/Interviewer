@@ -5,7 +5,7 @@ from openai import OpenAI
 from tests.testing_prompts import grader_prompt
 
 
-def grade(json_file_path, model="gpt-4-turbo"):
+def grade(json_file_path, model="gpt-4-turbo", suffix=""):
     client = OpenAI(base_url="https://api.openai.com/v1")
 
     with open(json_file_path) as file:
@@ -34,6 +34,7 @@ def grade(json_file_path, model="gpt-4-turbo"):
     feedback["file_name"] = json_file_path
     feedback["agent_llm"] = interview_data["interviewer_llm"]
     feedback["candidate_llm"] = interview_data["candidate_llm"]
+    feedback["grader_model"] = model
     feedback["type"] = interview_data["inputs"]["interview_type"]
     feedback["difficulty"] = interview_data["inputs"]["difficulty"]
     feedback["topic"] = interview_data["inputs"]["topic"]
@@ -48,7 +49,7 @@ def grade(json_file_path, model="gpt-4-turbo"):
     feedback["overall_score"] = sum(scores) / len(scores)
 
     # save results to json file in the same folder as the interview data
-    with open(json_file_path.replace(".json", "_feedback.json"), "w") as file:
+    with open(json_file_path.replace(".json", f"_feedback_{suffix}.json"), "w") as file:
         json.dump(feedback, file, indent=4)
 
     return feedback
