@@ -125,7 +125,7 @@ def run_evaluation(
 
     exp_name = f"{exp_name}_{pd.Timestamp.now().strftime('%Y-%m-%d_%H-%M-%S')}"
     os.makedirs(f"records/{exp_name}", exist_ok=True)
-    tasks = [(type_, i, llm_config) for type_ in interview_types for i in range(num_attempts) for llm_config in llm_configs]
+    tasks = [(type_, i, llm_config) for i in range(num_attempts) for type_ in interview_types for llm_config in llm_configs]
     complete_f = partial(complete_and_grade, exp_name=exp_name, grader_models=grader_models, candidate_model=candidate_model)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:

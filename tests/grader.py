@@ -28,7 +28,7 @@ def grade(json_file_path, model="gpt-4-turbo", suffix=""):
         {"role": "user", "content": f"Please evaluate the interviewer based on the following data: \n {'\n'.join(interview_summary_list)}"},
     ]
 
-    response = client.chat.completions.create(model=model, messages=messages, temperature=1, response_format={"type": "json_object"})
+    response = client.chat.completions.create(model=model, messages=messages, temperature=0, response_format={"type": "json_object"})
     feedback = json.loads(response.choices[0].message.content)
 
     feedback["file_name"] = json_file_path
