@@ -59,7 +59,7 @@ class LLMManager:
 
     def get_text(self, messages):
         try:
-            response = self.client.chat.completions.create(model=self.config.llm.name, messages=messages, temperature=1)
+            response = self.client.chat.completions.create(model=self.config.llm.name, messages=messages, temperature=1, max_tokens=2000)
             if not response.choices:
                 raise APIError("LLM Get Text Error", details="No choices in response")
             return response.choices[0].message.content.strip()
@@ -73,6 +73,7 @@ class LLMManager:
                 messages=messages,
                 temperature=1,
                 stream=True,
+                max_tokens=2000,
             )
         except Exception as e:
             raise APIError(f"LLM End Interview Error: Unexpected error: {e}")
