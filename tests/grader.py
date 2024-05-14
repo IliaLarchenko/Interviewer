@@ -5,7 +5,7 @@ from openai import OpenAI
 from tests.testing_prompts import grader_prompt
 
 
-def grade(json_file_path, model="gpt-4-turbo", suffix=""):
+def grade(json_file_path, model="gpt-4o", suffix=""):
     client = OpenAI(base_url="https://api.openai.com/v1")
 
     with open(json_file_path) as file:

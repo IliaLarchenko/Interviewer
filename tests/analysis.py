@@ -119,7 +119,7 @@ def run_evaluation(
     if interview_types is None:
         interview_types = ["ml_design", "math", "ml_theory", "system_design", "sql", "coding"]
     if grader_models is None:
-        grader_models = ["gpt-4-turbo"]
+        grader_models = ["gpt-4o"]
     if llm_configs is None:
         llm_configs = [None]
 
@@ -281,7 +281,7 @@ def filter_df(df, prefixes=["problem", "interviewer", "feedback"]):
     return valid_df
 
 
-def generate_analysis_report(df, folder, focus=None, model="gpt-4-turbo"):
+def generate_analysis_report(df, folder, focus=None, model="gpt-4o"):
 
     client = OpenAI(base_url="https://api.openai.com/v1")
 
@@ -341,7 +341,7 @@ def analyze_and_improve_segment(df, segment_to_improve=None):
     filtered_df = filtered_df[filtered_df[prefix_columns].mean(axis=1) < th_score]
 
     # Generating an analysis report
-    comments_analysis = generate_analysis_report(filtered_df, None, focus=segment_to_improve, model="gpt-4-turbo")
+    comments_analysis = generate_analysis_report(filtered_df, None, focus=segment_to_improve, model="gpt-4o")
 
     # Constructing improvement prompt
     improvement_prompt = """You want to improve the prompts for LLM interviewer.
@@ -364,7 +364,7 @@ You can add 1-3 lines to each of prompts if needed, but you can't change or remo
 
     # Making API call to OpenAI
     client = OpenAI(base_url="https://api.openai.com/v1")
-    model = "gpt-4-turbo"
+    model = "gpt-4o"
     messages = [
         {"role": "system", "content": improvement_prompt},
         {"role": "user", "content": current_prompts},

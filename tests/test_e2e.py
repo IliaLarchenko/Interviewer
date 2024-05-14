@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 def complete_and_grade_interview(interview_type):
     file_path, _ = complete_interview(interview_type, "test", model="gpt-3.5-turbo")
-    feedback = grade(file_path, model="gpt-4-turbo")
+    feedback = grade(file_path, model="gpt-4o")
     assert feedback["overall_score"] > 0.4
     return feedback["overall_score"]
 
