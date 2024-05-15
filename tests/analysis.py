@@ -15,6 +15,7 @@ from IPython.display import Markdown, display
 from openai import OpenAI
 from tests.testing_prompts import feedback_analyzer
 from resources.prompts import prompts, base_prompts
+from typing import List, Dict, Any, Tuple, Optional
 
 criteria_list = {
     "problem_statement",
@@ -65,7 +66,15 @@ criteria_list = {
 }
 
 
-def grade_attempt(file_path, grader_model, attempt_index):
+def grade_attempt(file_path: str, grader_model: str, attempt_index: int) -> Optional[Dict[str, Any]]:
+    """
+    Grade an interview attempt using the specified grader model.
+
+    :param file_path: Path to the JSON file containing interview data.
+    :param grader_model: Grader model to use for grading.
+    :param attempt_index: Index of the grading attempt.
+    :return: Feedback dictionary or None if grading fails.
+    """
     for retry in range(3):  # Retry mechanism
         try:
             feedback = grade(file_path, grader_model, str(attempt_index))
@@ -76,26 +85,36 @@ def grade_attempt(file_path, grader_model, attempt_index):
     return None
 
 
-def complete_and_grade(interview_params, exp_name, grader_models, candidate_model):
-    interview_type, attempt_num, llm_config = interview_params
+def complete_and_grade(
+    interview_params: Tuple[str, int, Any], exp_name: str, grader_models: List[str], candidate_model: str
+) -> List[Dict[str, Any]]:
+    """
+    Complete an interview and grade it using specified grader models.
 
+    :param interview_params: Tuple containing interview type, attempt number, and LLM config.
+    :param exp_name: Experiment name.
+    :param grader_models: List of grader models.
+    :param candidate_model: Candidate model name.
+    :return: List of feedback dictionaries.
+    """
+    interview_type, attempt_num, llm_config = interview_params
     feedback_list = []
-    attempt_successful = False
-    for attempt in range(3):  # Retry up to 3 times
+
+    # Attempt interview completion with retries
+    for attempt in range(3):
         try:
             file_path, _ = complete_interview(interview_type, exp_name, llm_config, model=candidate_model, pause=attempt * 5)
             print(
                 f"Attempt {attempt_num + 1}, retry {attempt + 1} interview simulation of {interview_type} by {llm_config.name} completed successfully"
             )
-            attempt_successful = True
             break
         except Exception as e:
             print(f"Retry {attempt + 1} for attempt {attempt_num + 1} of {interview_type} by {llm_config.name} failed with error: {e}")
-
-    if not attempt_successful:
+    else:
         print(f"All retries failed for attempt {attempt_num + 1} of {interview_type} by {llm_config.name}")
         return feedback_list
 
+    # Grade the interview
     try:
         for i, grader_model in enumerate(grader_models):
             feedback = grade_attempt(file_path, grader_model, i)
@@ -103,19 +122,36 @@ def complete_and_grade(interview_params, exp_name, grader_models, candidate_mode
                 feedback_list.append(feedback)
                 print(f"Attempt {attempt_num + 1} of {interview_type} by {llm_config.name} graded by {grader_model} successfully")
                 print(f"Overall score: {feedback['overall_score']}")
-
     except Exception as e:
         print(f"Grading for attempt {attempt_num + 1} of {interview_type} by {llm_config.name} failed with error: {e}")
 
-    if len(feedback_list) == 0:
+    if not feedback_list:
         print(f"Attempt {attempt_num + 1} of {interview_type} by {llm_config.name} returned an empty list")
 
     return feedback_list
 
 
 def run_evaluation(
-    exp_name, num_attempts=5, interview_types=None, grader_models=None, llm_configs=None, candidate_model="gpt-3.5-turbo", num_workers=3
-):
+    exp_name: str,
+    num_attempts: int = 5,
+    interview_types: Optional[List[str]] = None,
+    grader_models: Optional[List[str]] = None,
+    llm_configs: Optional[List[Any]] = None,
+    candidate_model: str = "gpt-3.5-turbo",
+    num_workers: int = 3,
+) -> str:
+    """
+    Run the evaluation by completing and grading interviews.
+
+    :param exp_name: Experiment name.
+    :param num_attempts: Number of attempts per interview type.
+    :param interview_types: List of interview types.
+    :param grader_models: List of grader models.
+    :param llm_configs: List of LLM configurations.
+    :param candidate_model: Candidate model name.
+    :param num_workers: Number of workers for concurrent execution.
+    :return: Experiment name.
+    """
     if interview_types is None:
         interview_types = ["ml_design", "math", "ml_theory", "system_design", "sql", "coding"]
     if grader_models is None:
@@ -143,12 +179,25 @@ def run_evaluation(
     return exp_name
 
 
-def highlight_color(val):
-    color = "red" if val < 0.7 else "orange" if val < 0.9 else "lightgreen" if val < 0.95 else "green"
+def highlight_color(val: float) -> str:
+    """
+    Highlight the cell color based on the value.
+
+    :param val: The value to determine the color.
+    :return: The color style string.
+    """
+    color_map = {val < 0.7: "red", 0.7 <= val < 0.9: "orange", 0.9 <= val < 0.95: "lightgreen", val >= 0.95: "green"}
+    color = next(color for condition, color in color_map.items() if condition)
     return f"color: {color}"
 
 
-def generate_and_display_tables(df):
+def generate_and_display_tables(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Generate and display various tables for analysis.
+
+    :param df: DataFrame containing the data.
+    :return: Dictionary of styled tables.
+    """
     # Grouping by prefix
     prefixes = ["problem", "interviewer", "feedback"]
     prefix_columns = [col for col in df.columns if any(col.startswith(prefix) for prefix in prefixes)]
@@ -235,15 +284,19 @@ def generate_and_display_tables(df):
     return tables_dict
 
 
-def filter_df(df, prefixes=["problem", "interviewer", "feedback"]):
-    # Identify all columns starting with any of the prefixes
+def filter_df(df: pd.DataFrame, prefixes: List[str] = ["problem", "interviewer", "feedback"]) -> pd.DataFrame:
+    """
+    Filter the DataFrame to keep only rows with valid values in specified columns.
+
+    :param df: DataFrame to filter.
+    :param prefixes: List of prefixes to identify columns to check.
+    :return: Filtered DataFrame.
+    """
     columns_to_check = [col for col in df.columns if any(col.startswith(prefix) for prefix in prefixes)]
 
-    # Function to check if a value is a boolean, None, or string representations of boolean types
     def is_valid_value(val):
         return isinstance(val, bool) or val is None or val is np.nan or val in {"True", "False", "None", "NaN"}
 
-    # Function to convert string representations to actual booleans
     def to_bool(val):
         if val == "True":
             return True
@@ -253,25 +306,17 @@ def filter_df(df, prefixes=["problem", "interviewer", "feedback"]):
             return None
         return val
 
-    # Check if all values in the specified columns are valid
     def all_values_valid(row):
         return all(is_valid_value(row[col]) for col in columns_to_check)
 
-    # Apply filtering to keep only rows with valid values
     valid_df = df[df.apply(all_values_valid, axis=1)].copy()
-
-    # Convert string representations to booleans
     for col in columns_to_check:
         valid_df[col] = valid_df[col].apply(to_bool)
 
-    # Identify removed rows
     removed_rows = df[~df.index.isin(valid_df.index)]
-
-    # Print the number of rows removed
     num_removed = len(removed_rows)
     print(f"Number of rows removed: {num_removed}")
 
-    # Print the value from the "file_name" column for each removed row, or `None` if not present
     if "file_name" in removed_rows.columns:
         for value in removed_rows["file_name"].tolist():
             print(f"Removed row file_name: {value}")
@@ -281,26 +326,30 @@ def filter_df(df, prefixes=["problem", "interviewer", "feedback"]):
     return valid_df
 
 
-def generate_analysis_report(df, folder, focus=None, model="gpt-4o"):
+def generate_analysis_report(df: pd.DataFrame, folder: Optional[str], focus: Optional[str] = None, model: str = "gpt-4o") -> str:
+    """
+    Generate an analysis report based on the feedback data.
 
+    :param df: DataFrame containing the feedback data.
+    :param folder: Folder to save the analysis report.
+    :param focus: Specific focus area for the analysis.
+    :param model: Model used for generating the analysis.
+    :return: Analysis report content.
+    """
     client = OpenAI(base_url="https://api.openai.com/v1")
 
     all_comments = "\n\n".join([f"Interview type: {t}. Feedback: {str(f)}" for t, f in zip(df["type"].values, df["comments"].values)])
 
-    messages = [
-        {"role": "system", "content": feedback_analyzer},
-        {"role": "user", "content": f"Interview feedback: {all_comments}"},
-    ]
+    messages = [{"role": "system", "content": feedback_analyzer}, {"role": "user", "content": f"Interview feedback: {all_comments}"}]
 
     if focus:
         messages.append({"role": "user", "content": f"Focus only on comments about {focus} part of the interview"})
 
     response = client.chat.completions.create(model=model, messages=messages, temperature=1)
-
     comments_analysis = response.choices[0].message.content
     display(Markdown(comments_analysis))
 
-    if folder is not None:
+    if folder:
         with open(os.path.join(folder, "analysis.md"), "w") as f:
             f.write(comments_analysis)
             f.write("\n\n")
@@ -308,16 +357,18 @@ def generate_analysis_report(df, folder, focus=None, model="gpt-4o"):
                 f.write(f"Type: {t}\n")
                 f.write(df[[c for c in df.columns if c != "comments"]][df["type"] == t].T.to_markdown())
                 f.write("\n\n")
-            f.write(f"Type: all\n")
-            f.write("\n\n")
-            f.write("Feedback:\n")
-            f.write(all_comments)
+            f.write(f"Type: all\n\nFeedback:\n{all_comments}")
 
     return comments_analysis
 
 
-def analyze_and_improve_segment(df, segment_to_improve=None):
+def analyze_and_improve_segment(df: pd.DataFrame, segment_to_improve: Optional[str] = None) -> None:
+    """
+    Analyze and improve a specific segment of the interview process.
 
+    :param df: DataFrame containing the data.
+    :param segment_to_improve: Segment to focus on for improvement.
+    """
     sorted_stages = df[["problem", "interviewer", "feedback"]].mean().sort_values()
     if not segment_to_improve:
         segment_to_improve = sorted_stages.index[0]
@@ -326,43 +377,25 @@ def analyze_and_improve_segment(df, segment_to_improve=None):
     print(f"Let's try to improve {segment_to_improve}")
     print(f"Quality threshold {th_score}")
 
-    # Identifying types that need improvement
     type_stage_scores = df.groupby("type")[segment_to_improve].mean()
-    types_to_improve = []
-    for t, s in type_stage_scores.items():
-        if s < th_score:
-            types_to_improve.append(t)
-
+    types_to_improve = [t for t, s in type_stage_scores.items() if s < th_score]
     print(f"We will focus on {types_to_improve}")
 
-    # Filtering DataFrame based on identified types and scoring criteria
     filtered_df = df[df["type"].apply(lambda x: x in types_to_improve)]
     prefix_columns = [col for col in df.columns if col.startswith(segment_to_improve)]
     filtered_df = filtered_df[filtered_df[prefix_columns].mean(axis=1) < th_score]
 
-    # Generating an analysis report
     comments_analysis = generate_analysis_report(filtered_df, None, focus=segment_to_improve, model="gpt-4o")
 
-    # Constructing improvement prompt
-    improvement_prompt = """You want to improve the prompts for LLM interviewer.
-Below you will see some of the prompts that are used right now. 
-As well as a summary of mistakes that interviewer make.
-You can add 1-3 lines to each of prompts if needed, but you can't change or remove anything.
-"""
+    improvement_prompt = "You want to improve the prompts for LLM interviewer. Below you will see some of the prompts that are used right now. As well as a summary of mistakes that interviewer make. You can add 1-3 lines to each of prompts if needed, but you can't change or remove anything."
 
-    # Selecting the base prompt for the segment to improve
     base_prompt = base_prompts.get(f"base_{segment_to_improve}", "Base prompt not found for the segment")
 
-    # Constructing the current prompts display
-    current_prompts = "The current prompts are below. \n"
-    current_prompts += "BASE PROMPT (applied to all interview types): \n"
-    current_prompts += base_prompt + "\n"
-
+    current_prompts = f"The current prompts are below. \nBASE PROMPT (applied to all interview types): \n{base_prompt}\n"
     for k, v in prompts.items():
         if segment_to_improve in k:
             current_prompts += f"{k}: {v[len(base_prompt):]} \n\n"
 
-    # Making API call to OpenAI
     client = OpenAI(base_url="https://api.openai.com/v1")
     model = "gpt-4o"
     messages = [

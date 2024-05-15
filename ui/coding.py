@@ -93,6 +93,7 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
         with gr.Accordion("Feedback", open=True) as feedback_acc:
             feedback = gr.Markdown(elem_id=f"{interview_type}_feedback")
 
+        # Start button click action chain
         start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).success(
             fn=lambda: True, outputs=[started_coding]
         ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(

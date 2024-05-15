@@ -3,11 +3,10 @@ import os
 import random
 import string
 import time
-
 from collections import defaultdict
+from typing import Dict, Optional, Tuple
 
 from openai import OpenAI
-
 from api.llm import LLMManager
 from utils.config import Config
 from resources.data import fixed_messages, topic_lists
@@ -15,14 +14,36 @@ from resources.prompts import prompts
 from tests.testing_prompts import candidate_prompt
 
 
-def complete_interview(interview_type, exp_name, llm_config=None, requirements="", difficulty="", topic="", model="gpt-3.5-turbo", pause=0):
+def complete_interview(
+    interview_type: str,
+    exp_name: str,
+    llm_config: Optional[Config] = None,
+    requirements: str = "",
+    difficulty: str = "",
+    topic: str = "",
+    model: str = "gpt-3.5-turbo",
+    pause: int = 0,
+) -> Tuple[str, Dict]:
+    """
+    Complete an interview and record the results.
+
+    :param interview_type: Type of interview to complete.
+    :param exp_name: Experiment name for file saving.
+    :param llm_config: Optional LLM configuration.
+    :param requirements: Additional requirements for the interview.
+    :param difficulty: Difficulty level for the interview.
+    :param topic: Topic for the interview.
+    :param model: Model to use for the candidate.
+    :param pause: Pause duration between requests to prevent rate limits.
+    :return: Tuple containing the file path and interview data.
+    """
     client = OpenAI(base_url="https://api.openai.com/v1")
     config = Config()
     if llm_config:
         config.llm = llm_config
     llm = LLMManager(config, prompts)
     llm_name = config.llm.name
-    print(f"Starting evaluation interviewer LLM: {llm_name}, candidate_LLM: {model} interview_type: {interview_type}")
+    print(f"Starting evaluation interviewer LLM: {llm_name}, candidate LLM: {model}, interview type: {interview_type}")
     # Select a random topic or difficulty if not provided
     topic = topic or random.choice(topic_lists[interview_type])
     difficulty = difficulty or random.choice(["easy", "medium", "hard"])
@@ -46,7 +67,6 @@ def complete_interview(interview_type, exp_name, llm_config=None, requirements="
             "average_response_time_seconds": 0,
         },
     )
-
     # Initialize interviewer and candidate messages
     messages_interviewer = llm.init_bot(problem_statement_text, interview_type)
     chat_display = [[None, fixed_messages["start"]]]
@@ -82,7 +102,6 @@ def complete_interview(interview_type, exp_name, llm_config=None, requirements="
 
         chat_display.append([candidate_message, None])
 
-        # Check if the interview should finish
         if response_json.get("finished") and not response_json.get("question"):
             break
 
