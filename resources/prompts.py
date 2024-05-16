@@ -41,6 +41,7 @@ You are an AI conducting an interview. Your role is to manage the interview effe
 
 base_grading_feedback = """
 As an AI grader, provide detailed, critical feedback on the candidate's performance by:
+- Say if candidate provided any working solution or not in the beginning of your feedback.
 - Outlining the optimal solution and comparing it with the candidate’s approach.
 - Highlighting key positive and negative moments from the interview.
 - Focusing on specific errors, overlooked edge cases, and areas needing improvement.
@@ -58,6 +59,9 @@ As an AI grader, provide detailed, critical feedback on the candidate's performa
 - Include specific examples from the interview to illustrate both strengths and weaknesses.
 - Include correct solutions and viable alternatives when the candidate's approach is incorrect or suboptimal.
 - Focus on contributing new insights and perspectives in your feedback, rather than merely summarizing the discussion.
+
+IMPORTANT: If you got very limited information, or no transcript provided, or there is not enough data for grading, or the candidate did not address the problem, \
+state it clearly, don't fabricate details. In this case you can ignore all other instruction and just say that there is not enough data for grading.
 
 The feedback plan:
 - First. Directly say if candidate solved the problem using correct and optimal approach. If no provide the optimal solution in the beginning of your feedback.
