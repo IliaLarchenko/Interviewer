@@ -141,6 +141,8 @@ class LLMManager:
             for m in split_messages:
                 if m.strip():
                     chat_display.append([None, m])
+            if len(chat_display) == original_len:
+                chat_display.append([None, ""])
 
             yield chat_history, chat_display, code
 

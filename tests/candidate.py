@@ -95,9 +95,9 @@ def complete_interview(
             response_content = "".join(random.choices(string.ascii_letters + string.digits, k=50))
         elif mode == "repeat":
             response_content = chat_display[-1][1]
-        else:  # normal mode
+        else:
             response = client.chat.completions.create(
-                model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}
+                model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}, stream=False
             )
             response_json = json.loads(response.choices[0].message.content)
             response_content = response_json.get("message", "")
