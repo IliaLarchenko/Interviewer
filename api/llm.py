@@ -130,12 +130,18 @@ class LLMManager:
         Send a request to the LLM and update the chat display.
         """
         chat_history = self.update_chat_history(code, previous_code, chat_history, chat_display)
-        chat_display.append([None, ""])
+        original_len = len(chat_display)
         chat_history.append({"role": "assistant", "content": ""})
         reply = self.get_text(chat_history)
         for message in reply:
-            chat_display[-1][1] = message.split("#NOTES#")[0].strip()
             chat_history[-1]["content"] = message
+            text_to_display = message.split("#NOTES#")[0].strip()
+            split_messages = text_to_display.split("\n\n")
+            chat_display = chat_display[:original_len]
+            for m in split_messages:
+                if m.strip():
+                    chat_display.append([None, m])
+
             yield chat_history, chat_display, code
 
     def end_interview_prepare_messages(

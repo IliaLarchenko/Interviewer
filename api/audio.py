@@ -230,4 +230,8 @@ class TTSManager:
         :return: Generator yielding chunks of audio bytes.
         """
         if len(chat_history) > 0 and chat_history[-1][1]:
-            yield from self.read_text(chat_history[-1][1])
+            n = len(chat_history) - 1
+            while n >= 0 and chat_history[n][1]:
+                n -= 1
+            for i in range(n + 1, len(chat_history)):
+                yield from self.read_text(chat_history[i][1])

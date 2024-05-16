@@ -110,7 +110,7 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
             outputs=[solution_acc, end_btn, audio_input, send_btn],
         )
 
-        end_btn.click(
+        end_btn.click(fn=lambda x: add_candidate_message("Let's stop here.", x), inputs=[chat], outputs=[chat]).success(
             fn=add_interviewer_message(fixed_messages["end"]),
             inputs=[chat],
             outputs=[chat],
