@@ -171,101 +171,63 @@ class STTManager:
 class TTSManager:
     def __init__(self, config):
         self.config = config
-        self.status = self.test_tts()
-        self.streaming = self.test_tts_stream() if self.status else False
-        self.read_last_message = self.rlm_stream if self.streaming else self.rlm
+        self.status = self.test_tts(stream=False)
+        self.streaming = self.test_tts(stream=True) if self.status else False
 
-    def test_tts(self) -> bool:
+    def test_tts(self, stream) -> bool:
         """
         Test if the TTS service is working correctly.
-
         :return: True if the TTS service is working, False otherwise.
         """
         try:
-            self.read_text("Handshake")
+            list(self.read_text("Handshake", stream=stream))
             return True
         except:
             return False
 
-    def test_tts_stream(self) -> bool:
+    def read_text(self, text: str, stream: Optional[bool] = None) -> Generator[bytes, None, None]:
         """
-        Test if the TTS streaming service is working correctly.
-
-        :return: True if the TTS streaming service is working, False otherwise.
-        """
-        try:
-            for _ in self.read_text_stream("Handshake"):
-                pass
-            return True
-        except:
-            return False
-
-    def read_text(self, text: str) -> bytes:
-        """
-        Convert text to speech and return the audio bytes.
-
+        Convert text to speech and return the audio bytes, optionally streaming the response.
         :param text: Text to convert to speech.
-        :return: Bytes representation of the audio.
-        """
-        headers = {"Authorization": "Bearer " + self.config.tts.key}
-        try:
-            if self.config.tts.type == "OPENAI_API":
-                data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus", "speed": 1.5}
-                response = requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data)
-            elif self.config.tts.type == "HF_API":
-                response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
-            if response.status_code != 200:
-                error_details = response.json().get("error", "No error message provided")
-                raise APIError(f"TTS Error: {self.config.tts.type} error", status_code=response.status_code, details=error_details)
-        except APIError:
-            raise
-        except Exception as e:
-            raise APIError(f"TTS Error: Unexpected error: {e}")
-
-        return response.content
-
-    def read_text_stream(self, text: str) -> Generator[bytes, None, None]:
-        """
-        Convert text to speech using streaming and return the audio bytes.
-
-        :param text: Text to convert to speech.
+        :param stream: Whether to use streaming or not.
         :return: Generator yielding chunks of audio bytes.
         """
-        if self.config.tts.type != "OPENAI_API":
-            raise APIError("TTS Error: Streaming not supported for this TTS type")
+        if stream is None:
+            stream = self.streaming
+
         headers = {"Authorization": "Bearer " + self.config.tts.key}
         data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
 
         try:
-            with requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data, stream=True) as response:
+            if not stream:
+                if self.config.tts.type == "OPENAI_API":
+                    response = requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data)
+                elif self.config.tts.type == "HF_API":
+                    response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
+
                 if response.status_code != 200:
                     error_details = response.json().get("error", "No error message provided")
-                    raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
-                else:
+                    raise APIError(f"TTS Error: {self.config.tts.type} error", status_code=response.status_code, details=error_details)
+                yield response.content
+            else:
+                if self.config.tts.type != "OPENAI_API":
+                    raise APIError("TTS Error: Streaming not supported for this TTS type")
+
+                with requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data, stream=True) as response:
+                    if response.status_code != 200:
+                        error_details = response.json().get("error", "No error message provided")
+                        raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
                     yield from response.iter_content(chunk_size=1024)
-        except StopIteration:
-            pass
         except APIError:
             raise
         except Exception as e:
             raise APIError(f"TTS Error: Unexpected error: {e}")
 
-    def rlm(self, chat_history: List[List[Optional[str]]]) -> bytes:
+    def read_last_message(self, chat_history: List[List[Optional[str]]]) -> Generator[bytes, None, None]:
         """
         Read the last message in the chat history and convert it to speech.
-
-        :param chat_history: List of chat messages.
-        :return: Bytes representation of the audio.
-        """
-        if len(chat_history) > 0 and chat_history[-1][1]:
-            return self.read_text(chat_history[-1][1])
-
-    def rlm_stream(self, chat_history: List[List[Optional[str]]]) -> Generator[bytes, None, None]:
-        """
-        Read the last message in the chat history and convert it to speech using streaming.
-
         :param chat_history: List of chat messages.
         :return: Generator yielding chunks of audio bytes.
         """
         if len(chat_history) > 0 and chat_history[-1][1]:
-            yield from self.read_text_stream(chat_history[-1][1])
+            yield from self.read_text(chat_history[-1][1])
