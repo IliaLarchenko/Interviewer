@@ -23,9 +23,11 @@ def complete_interview(
     topic: str = "",
     model: str = "gpt-3.5-turbo",
     pause: int = 0,
+    mode: str = "normal",
+    max_messages: Optional[int] = None,
 ) -> Tuple[str, Dict]:
     """
-    Complete an interview and record the results.
+    Complete an interview and record the results with additional strange use cases.
 
     :param interview_type: Type of interview to complete.
     :param exp_name: Experiment name for file saving.
@@ -35,6 +37,8 @@ def complete_interview(
     :param topic: Topic for the interview.
     :param model: Model to use for the candidate.
     :param pause: Pause duration between requests to prevent rate limits.
+    :param mode: Mode of operation ("normal", "empty", "gibberish", "repeat").
+    :param max_messages: Maximum number of messages in the conversation.
     :return: Tuple containing the file path and interview data.
     """
     client = OpenAI(base_url="https://api.openai.com/v1")
@@ -48,7 +52,8 @@ def complete_interview(
     topic = topic or random.choice(topic_lists[interview_type])
     difficulty = difficulty or random.choice(["easy", "medium", "hard"])
 
-    problem_statement_text = llm.get_problem_full(requirements, difficulty, topic, interview_type)
+    for problem_statement_text in llm.get_problem(requirements, difficulty, topic, interview_type):
+        pass
 
     interview_data = defaultdict(
         lambda: None,
@@ -80,33 +85,41 @@ def complete_interview(
     response_times = []
     previous_code = ""
 
-    for _ in range(30):
-        response = client.chat.completions.create(
-            model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}
-        )
-        response_json = json.loads(response.choices[0].message.content)
+    if max_messages is None:
+        max_messages = 30 if mode == "normal" else 5
 
-        code = response_json.get("code_and_notes", "")
-        candidate_message = response_json.get("message", "")
+    for _ in range(max_messages):
+        if mode == "empty":
+            response_content = ""
+        elif mode == "gibberish":
+            response_content = "".join(random.choices(string.ascii_letters + string.digits, k=50))
+        elif mode == "repeat":
+            response_content = chat_display[-1][1]
+        else:  # normal mode
+            response = client.chat.completions.create(
+                model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}
+            )
+            response_json = json.loads(response.choices[0].message.content)
+            response_content = response_json.get("message", "")
 
-        if not code and not candidate_message:
-            print("No message or code in response")
+        candidate_message = response_content
+
+        if not candidate_message and mode != "empty":
+            print("No message in response")
             continue
 
-        messages_candidate.append({"role": "assistant", "content": response.choices[0].message.content})
+        messages_candidate.append({"role": "assistant", "content": candidate_message})
 
-        if code:
-            interview_data["transcript"].append(f"CANDIDATE CODE AND NOTES: {code}")
-        elif candidate_message:
-            interview_data["transcript"].append(f"CANDIDATE MESSAGE: {candidate_message}")
+        interview_data["transcript"].append(f"CANDIDATE MESSAGE: {candidate_message}")
 
         chat_display.append([candidate_message, None])
 
-        if response_json.get("finished") and not response_json.get("question"):
-            break
-
         send_time = time.time()
-        messages_interviewer, chat_display, previous_code = llm.send_request_full(code, previous_code, messages_interviewer, chat_display)
+        for messages_interviewer, chat_display, previous_code in llm.send_request(
+            candidate_message, previous_code, messages_interviewer, chat_display
+        ):
+            pass
+
         response_times.append(time.time() - send_time)
 
         messages_candidate.append({"role": "user", "content": chat_display[-1][1]})
@@ -119,7 +132,9 @@ def complete_interview(
 
         time.sleep(pause)  # to prevent exceeding rate limits
 
-    interview_data["feedback"] = llm.end_interview_full(problem_statement_text, messages_interviewer, interview_type)
+    for fb in llm.end_interview(problem_statement_text, messages_interviewer, interview_type):
+        interview_data["feedback"] = fb
+
     interview_data["average_response_time_seconds"] = round(sum(response_times) / len(response_times), 2) if response_times else 0
 
     current_time = time.strftime("%Y%m%d-%H%M%S")
