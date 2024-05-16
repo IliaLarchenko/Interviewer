@@ -26,7 +26,7 @@ def test_complete_interview() -> None:
     interview_types = ["ml_design", "math", "ml_theory", "system_design", "sql", "coding"]
     scores: List[float] = []
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         # Test normal interviews
         futures = [executor.submit(complete_and_grade_interview, it) for it in interview_types]
 

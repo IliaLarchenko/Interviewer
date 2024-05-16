@@ -99,8 +99,11 @@ def complete_interview(
             response = client.chat.completions.create(
                 model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}, stream=False
             )
-            response_json = json.loads(response.choices[0].message.content)
-            response_content = response_json.get("message", "")
+            try:
+                response_json = json.loads(response.choices[0].message.content)
+                response_content = response_json.get("message", "")
+            except:
+                continue
 
         candidate_message = response_content
 
