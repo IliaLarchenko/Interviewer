@@ -1,80 +1,106 @@
 import gradio as gr
 import numpy as np
+import os
 
 from resources.data import fixed_messages, topic_lists
 from utils.ui import add_candidate_message, add_interviewer_message
 
 
-def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, name="Coding", interview_type="coding"):
-    with gr.Tab(name, render=False, elem_id=f"{interview_type}_tab") as problem_tab:
+def change_code_area(interview_type):
+    if interview_type == "coding":
+        return gr.update(
+            label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
+            language="python",
+        )
+    elif interview_type == "sql":
+        return gr.update(
+            label="Please write your query here.",
+            language="sql",
+        )
+    else:
+        return gr.update(
+            label="Please write any notes for your solution here.",
+            language=None,
+        )
+
+
+def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
+    with gr.Tab("Interview", render=False, elem_id=f"tab") as problem_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
-        started_coding = gr.State(False)
-        interview_type_var = gr.State(interview_type)
-        with gr.Accordion("Settings") as init_acc:
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown("##### Problem settings")
-                    with gr.Row():
-                        gr.Markdown("Difficulty")
-                        difficulty_select = gr.Dropdown(
-                            label="Select difficulty",
-                            choices=["Easy", "Medium", "Hard"],
-                            value="Medium",
-                            container=False,
-                            allow_custom_value=True,
-                            elem_id=f"{interview_type}_difficulty_select",
-                        )
-                    with gr.Row():
-                        topics = topic_lists[interview_type].copy()
-                        np.random.shuffle(topics)
-                        gr.Markdown("Topic (can type custom value)")
-                        topic_select = gr.Dropdown(
-                            label="Select topic",
-                            choices=topics,
-                            value=topics[0],
-                            container=False,
-                            allow_custom_value=True,
-                            elem_id=f"{interview_type}_topic_select",
-                        )
-                with gr.Column(scale=2):
-                    requirements = gr.Textbox(
-                        label="Requirements",
-                        placeholder="Specify additional requirements",
-                        lines=5,
-                        elem_id=f"{interview_type}_requirements",
+        hi_markdown = gr.Markdown(
+            "<h2 style='text-align: center;'> Hi! I'm here to guide you through a practice session for your technical interview. Choose the interview settings to begin.</h2>\n"
+        )
+        with gr.Row() as init_acc:
+            with gr.Column(scale=3):
+                interview_type_select = gr.Dropdown(
+                    show_label=False,
+                    info="Type of the interview.",
+                    choices=["coding", "ml_design", "ml_theory", "system_design", "math", "sql"],
+                    value="coding",
+                    container=True,
+                    allow_custom_value=False,
+                    elem_id=f"interview_type_select",
+                    scale=2,
+                )
+                difficulty_select = gr.Dropdown(
+                    show_label=False,
+                    info="Difficulty of the problem.",
+                    choices=["Easy", "Medium", "Hard"],
+                    value="Medium",
+                    container=True,
+                    allow_custom_value=True,
+                    elem_id=f"difficulty_select",
+                    scale=2,
+                )
+                topic_select = gr.Dropdown(
+                    show_label=False,
+                    info="Topic (you can type any value).",
+                    choices=topic_lists[interview_type_select.value],
+                    value=np.random.choice(topic_lists[interview_type_select.value]),
+                    container=True,
+                    allow_custom_value=True,
+                    elem_id=f"topic_select",
+                    scale=2,
+                )
+            with gr.Column(scale=4):
+                requirements = gr.Textbox(
+                    label="Requirements",
+                    show_label=False,
+                    placeholder="Specify additional requirements if any.",
+                    container=False,
+                    lines=5,
+                    elem_id=f"requirements",
+                )
+                with gr.Row():
+                    terms_checkbox = gr.Checkbox(
+                        label="",
+                        container=False,
+                        value=not os.getenv("IS_DEMO", False),
+                        interactive=True,
+                        elem_id=f"terms_checkbox",
+                        min_width=20,
                     )
-                    start_btn = gr.Button("Generate a problem", elem_id=f"{interview_type}_start_btn")
+                    with gr.Column(scale=100):
+                        gr.Markdown(
+                            "#### I agree to the [terms and conditions](https://github.com/IliaLarchenko/Interviewer?tab=readme-ov-file#important-legal-and-compliance-information)"
+                        )
+                start_btn = gr.Button("Generate a problem", elem_id=f"start_btn", interactive=not os.getenv("IS_DEMO", False))
 
-        with gr.Accordion("Problem statement", open=True) as problem_acc:
-            description = gr.Markdown(elem_id=f"{interview_type}_problem_description")
-        with gr.Accordion("Solution", open=False) as solution_acc:
+        with gr.Accordion("Problem statement", open=True, visible=False) as problem_acc:
+            description = gr.Markdown(elem_id=f"problem_description", line_breaks=True)
+        with gr.Accordion("Solution", open=True, visible=False) as solution_acc:
             with gr.Row() as content:
                 with gr.Column(scale=2):
-                    if interview_type == "coding":
-                        code = gr.Code(
-                            label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
-                            language="python",
-                            lines=46,
-                            elem_id=f"{interview_type}_code",
-                        )
-                    elif interview_type == "sql":
-                        code = gr.Code(
-                            label="Please write your query here.",
-                            language="sql",
-                            lines=46,
-                            elem_id=f"{interview_type}_code",
-                        )
-                    else:
-                        code = gr.Code(
-                            label="Please write any notes for your solution here.",
-                            language=None,
-                            lines=46,
-                            elem_id=f"{interview_type}_code",
-                        )
+                    code = gr.Code(
+                        label="Please write your code here.",
+                        language="python",
+                        lines=46,
+                        elem_id=f"code",
+                    )
                 with gr.Column(scale=1):
-                    end_btn = gr.Button("Finish the interview", interactive=False, variant="stop", elem_id=f"{interview_type}_end_btn")
-                    chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False, elem_id=f"{interview_type}_chat")
+                    end_btn = gr.Button("Finish the interview", interactive=False, variant="stop", elem_id=f"end_btn")
+                    chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False, elem_id=f"chat")
                     message = gr.Textbox(
                         label="Message",
                         show_label=False,
@@ -82,31 +108,41 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
                         max_lines=3,
                         interactive=True,
                         container=False,
-                        elem_id=f"{interview_type}_message",
+                        elem_id=f"message",
                     )
-                    send_btn = gr.Button("Send", interactive=False, elem_id=f"{interview_type}_send_btn")
-                    audio_input = gr.Audio(interactive=False, **default_audio_params, elem_id=f"{interview_type}_audio_input")
+                    send_btn = gr.Button("Send", interactive=False, elem_id=f"send_btn")
+                    audio_input = gr.Audio(interactive=False, **default_audio_params, elem_id=f"audio_input")
 
                     audio_buffer = gr.State(np.array([], dtype=np.int16))
                     transcript = gr.State({"words": [], "not_confirmed": 0, "last_cutoff": 0, "text": ""})
 
-        with gr.Accordion("Feedback", open=True) as feedback_acc:
-            feedback = gr.Markdown(elem_id=f"{interview_type}_feedback")
+        with gr.Accordion("Feedback", open=True, visible=False) as feedback_acc:
+            feedback = gr.Markdown(elem_id=f"feedback", line_breaks=True)
 
         # Start button click action chain
         start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).success(
-            fn=lambda: True, outputs=[started_coding]
-        ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
-            fn=lambda: (gr.update(open=False), gr.update(interactive=False)), outputs=[init_acc, start_btn]
+            fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+        ).success(
+            fn=lambda: (
+                gr.update(visible=False),
+                gr.update(interactive=False),
+                gr.update(interactive=False),
+                gr.update(interactive=False),
+                gr.update(visible=False),
+            ),
+            outputs=[init_acc, start_btn, terms_checkbox, interview_type_select, hi_markdown],
+        ).success(
+            fn=lambda: (gr.update(visible=True)),
+            outputs=[problem_acc],
         ).success(
             fn=llm.get_problem,
-            inputs=[requirements, difficulty_select, topic_select, interview_type_var],
+            inputs=[requirements, difficulty_select, topic_select, interview_type_select],
             outputs=[description],
             scroll_to_output=True,
         ).success(
-            fn=llm.init_bot, inputs=[description, interview_type_var], outputs=[chat_history]
+            fn=llm.init_bot, inputs=[description, interview_type_select], outputs=[chat_history]
         ).success(
-            fn=lambda: (gr.update(open=True), gr.update(interactive=True), gr.update(interactive=True), gr.update(interactive=True)),
+            fn=lambda: (gr.update(visible=True), gr.update(interactive=True), gr.update(interactive=True), gr.update(interactive=True)),
             outputs=[solution_acc, end_btn, audio_input, send_btn],
         )
 
@@ -124,7 +160,10 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
             ),
             outputs=[solution_acc, end_btn, problem_acc, audio_input, send_btn],
         ).success(
-            fn=llm.end_interview, inputs=[description, chat_history, interview_type_var], outputs=[feedback]
+            fn=lambda: (gr.update(visible=True)),
+            outputs=[feedback_acc],
+        ).success(
+            fn=llm.end_interview, inputs=[description, chat_history, interview_type_select], outputs=[feedback]
         )
 
         send_btn.click(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).success(
@@ -154,9 +193,11 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output, na
                 fn=lambda: gr.update(interactive=True), outputs=[send_btn]
             ).success(fn=lambda: None, outputs=[audio_input])
 
-        # TODO: add proper messages and clean up when changing the interview type
-        # problem_tab.select(fn=add_interviewer_message(fixed_messages["intro"]), inputs=[chat, started_coding], outputs=[chat]).success(
-        #     fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-        # )
+        interview_type_select.change(
+            fn=lambda x: gr.update(choices=topic_lists[x], value=np.random.choice(topic_lists[x])),
+            inputs=[interview_type_select],
+            outputs=[topic_select],
+        ).success(fn=change_code_area, inputs=[interview_type_select], outputs=[code])
 
+        terms_checkbox.change(fn=lambda x: gr.update(interactive=x), inputs=[terms_checkbox], outputs=[start_btn])
     return problem_tab

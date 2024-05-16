@@ -24,20 +24,10 @@ def initialize_services():
 
 def create_interface(llm, tts, stt, audio_params):
     """Create and configure the Gradio interface."""
-    with gr.Blocks(title="AI Interviewer") as demo:
+    with gr.Blocks(title="AI Interviewer", theme=gr.themes.Default()) as demo:
         audio_output = gr.Audio(label="Play audio", autoplay=True, visible=os.environ.get("DEBUG", False), streaming=tts.streaming)
-        tabs = [
-            get_instructions_ui(llm, tts, stt, audio_params),
-            get_problem_solving_ui(llm, tts, stt, audio_params, audio_output, name="Coding", interview_type="coding"),
-            get_problem_solving_ui(llm, tts, stt, audio_params, audio_output, name="ML Design (Beta)", interview_type="ml_design"),
-            get_problem_solving_ui(llm, tts, stt, audio_params, audio_output, name="ML Theory (Beta)", interview_type="ml_theory"),
-            get_problem_solving_ui(llm, tts, stt, audio_params, audio_output, name="System Design (Beta)", interview_type="system_design"),
-            get_problem_solving_ui(llm, tts, stt, audio_params, audio_output, name="Math (Beta)", interview_type="math"),
-            get_problem_solving_ui(llm, tts, stt, audio_params, audio_output, name="SQL (Beta)", interview_type="sql"),
-        ]
-
-        for tab in tabs:
-            tab.render()
+        get_problem_solving_ui(llm, tts, stt, audio_params, audio_output).render()
+        get_instructions_ui(llm, tts, stt, audio_params).render()
     return demo
 
 
