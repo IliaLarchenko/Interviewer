@@ -8,7 +8,8 @@ def add_interviewer_message(message):
 
 
 def add_candidate_message(message, chat):
-    chat.append((message, None))
+    if message and len(message) > 0:
+        chat.append((message, None))
     return chat
 
 

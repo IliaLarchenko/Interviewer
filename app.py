@@ -35,6 +35,7 @@ def main():
     """Main function to initialize services and launch the Gradio interface."""
     config, llm, tts, stt = initialize_services()
     demo = create_interface(llm, tts, stt, default_audio_params)
+    demo.config["dependencies"][0]["show_progress"] = "hidden"
     demo.launch(show_api=False)
 
 

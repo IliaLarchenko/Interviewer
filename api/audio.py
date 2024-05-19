@@ -8,6 +8,28 @@ from openai import OpenAI
 
 from utils.errors import APIError, AudioConversionError
 from typing import List, Dict, Optional, Generator, Tuple
+import webrtcvad
+
+
+def detect_voice(audio: np.ndarray, sample_rate: int = 48000, frame_duration: int = 30) -> bool:
+    vad = webrtcvad.Vad()
+    vad.set_mode(3)  # Aggressiveness mode: 0 (least aggressive) to 3 (most aggressive)
+
+    # Convert numpy array to 16-bit PCM bytes
+    audio_bytes = audio.tobytes()
+
+    num_samples_per_frame = int(sample_rate * frame_duration / 1000)
+    frames = [audio_bytes[i : i + num_samples_per_frame * 2] for i in range(0, len(audio_bytes), num_samples_per_frame * 2)]
+
+    count_speech = 0
+    for frame in frames:
+        if len(frame) < num_samples_per_frame * 2:
+            continue
+        if vad.is_speech(frame, sample_rate):
+            count_speech += 1
+            if count_speech > 6:
+                return True
+    return False
 
 
 class STTManager:
@@ -42,9 +64,7 @@ class STTManager:
             raise AudioConversionError(f"Error converting numpy array to audio bytes: {e}")
         return buffer.getvalue()
 
-    def process_audio_chunk(
-        self, audio: Tuple[int, np.ndarray], audio_buffer: np.ndarray, transcript: Dict
-    ) -> Tuple[Dict, np.ndarray, str]:
+    def process_audio_chunk(self, audio: Tuple[int, np.ndarray], audio_buffer: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Process streamed audio data to accumulate and transcribe with overlapping segments.
 
@@ -53,15 +73,26 @@ class STTManager:
         :param transcript: Current transcript dictionary.
         :return: Updated transcript, updated audio buffer, and transcript text.
         """
-        audio_buffer = np.concatenate((audio_buffer, audio[1]))
 
-        if len(audio_buffer) >= self.SAMPLE_RATE * self.CHUNK_LENGTH or len(audio_buffer) % (self.SAMPLE_RATE // 2) != 0:
-            audio_bytes = self.numpy_audio_to_bytes(audio_buffer[: self.SAMPLE_RATE * self.CHUNK_LENGTH])
-            audio_buffer = audio_buffer[self.SAMPLE_RATE * self.STEP_LENGTH :]
-            new_transcript = self.speech_to_text_stream(audio_bytes)
-            transcript = self.merge_transcript(transcript, new_transcript)
+        has_voice = detect_voice(audio[1])
+        ended = len(audio[1]) % 24000 != 0
 
-        return transcript, audio_buffer, transcript["text"]
+        if has_voice:
+            audio_buffer = np.concatenate((audio_buffer, audio[1]))
+
+        is_short = len(audio_buffer) / 48000 < 1.0
+
+        if is_short or (has_voice and not ended):
+            return audio_buffer, np.array([], dtype=np.int16)
+
+        return np.array([], dtype=np.int16), audio_buffer
+
+    def transcribe_audio(self, audio: np.ndarray, text) -> str:
+        if len(audio) < 500:
+            return text
+        else:
+            transcript = self.transcribe_numpy_array(audio, context=text)
+            return text + " " + transcript
 
     def speech_to_text_stream(self, audio: bytes) -> List[Dict[str, str]]:
         """
@@ -114,19 +145,21 @@ class STTManager:
         transcript["text"] = " ".join(transcript["words"])
         return transcript
 
-    def speech_to_text_full(self, audio: Tuple[int, np.ndarray]) -> str:
+    def transcribe_numpy_array(self, audio: np.ndarray, context: Optional[str] = None) -> str:
         """
         Convert speech to text from a full audio segment.
 
         :param audio: Tuple containing the sample rate and audio data as numpy array.
         :return: Transcribed text.
         """
-        audio_bytes = self.numpy_audio_to_bytes(audio[1])
+        audio_bytes = self.numpy_audio_to_bytes(audio)
         try:
             if self.config.stt.type == "OPENAI_API":
                 data = ("temp.wav", audio_bytes, "audio/wav")
                 client = OpenAI(base_url=self.config.stt.url, api_key=self.config.stt.key)
-                transcription = client.audio.transcriptions.create(model=self.config.stt.name, file=data, response_format="text")
+                transcription = client.audio.transcriptions.create(
+                    model=self.config.stt.name, file=data, response_format="text", prompt=context
+                )
             elif self.config.stt.type == "HF_API":
                 headers = {"Authorization": "Bearer " + self.config.stt.key}
                 response = requests.post(self.config.stt.url, headers=headers, data=audio_bytes)

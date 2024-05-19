@@ -3,11 +3,14 @@ import numpy as np
 import os
 
 from itertools import chain
+import time
 
 from resources.data import fixed_messages, topic_lists
 from utils.ui import add_candidate_message, add_interviewer_message
 from typing import List, Dict, Generator, Optional, Tuple
 from functools import partial
+from api.llm import LLMManager
+from api.audio import TTSManager, STTManager
 
 
 def send_request(
@@ -15,8 +18,8 @@ def send_request(
     previous_code: str,
     chat_history: List[Dict[str, str]],
     chat_display: List[List[Optional[str]]],
-    llm,
-    tts,
+    llm: LLMManager,
+    tts: Optional[TTSManager],
     silent: Optional[bool] = False,
 ) -> Generator[Tuple[List[Dict[str, str]], List[List[Optional[str]]], str, bytes], None, None]:
     """
@@ -26,13 +29,18 @@ def send_request(
     if silent is None:
         silent = os.getenv("SILENT", False)
 
+    if chat_display[-1][0] is None and code == previous_code:
+        yield chat_history, chat_display, code, b""
+        return
+
     chat_history = llm.update_chat_history(code, previous_code, chat_history, chat_display)
     original_len = len(chat_display)
     chat_display.append([None, ""])
-    chat_history.append({"role": "assistant", "content": ""})
 
     text_chunks = []
     reply = llm.get_text(chat_history)
+
+    chat_history.append({"role": "assistant", "content": ""})
 
     audio_generator = iter(())
     has_text_item = True
@@ -99,7 +107,7 @@ def change_code_area(interview_type):
         )
 
 
-def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
+def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, default_audio_params: Dict, audio_output):
     send_request_partial = partial(send_request, llm=llm, tts=tts)
 
     with gr.Tab("Interview", render=False, elem_id=f"tab") as problem_tab:
@@ -178,20 +186,22 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
                 with gr.Column(scale=1):
                     end_btn = gr.Button("Finish the interview", interactive=False, variant="stop", elem_id=f"end_btn")
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False, elem_id=f"chat")
+
+                    # I need this message box only because chat component is flickering when I am updating it
+                    # To be improved in the future
                     message = gr.Textbox(
                         label="Message",
                         show_label=False,
-                        lines=3,
-                        max_lines=3,
-                        interactive=True,
+                        lines=5,
+                        max_lines=5,
+                        interactive=False,
                         container=False,
                         elem_id=f"message",
                     )
-                    send_btn = gr.Button("Send", interactive=False, elem_id=f"send_btn")
-                    audio_input = gr.Audio(interactive=False, **default_audio_params, elem_id=f"audio_input")
 
+                    audio_input = gr.Audio(interactive=False, **default_audio_params, elem_id=f"audio_input")
                     audio_buffer = gr.State(np.array([], dtype=np.int16))
-                    transcript = gr.State({"words": [], "not_confirmed": 0, "last_cutoff": 0, "text": ""})
+                    audio_to_transcribe = gr.State(np.array([], dtype=np.int16))
 
         with gr.Accordion("Feedback", open=True, visible=False) as feedback_acc:
             feedback = gr.Markdown(elem_id=f"feedback", line_breaks=True)
@@ -219,8 +229,8 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
         ).success(
             fn=llm.init_bot, inputs=[description, interview_type_select], outputs=[chat_history]
         ).success(
-            fn=lambda: (gr.update(visible=True), gr.update(interactive=True), gr.update(interactive=True), gr.update(interactive=True)),
-            outputs=[solution_acc, end_btn, audio_input, send_btn],
+            fn=lambda: (gr.update(visible=True), gr.update(interactive=True), gr.update(interactive=True)),
+            outputs=[solution_acc, end_btn, audio_input],
         )
 
         end_btn.click(fn=lambda x: add_candidate_message("Let's stop here.", x), inputs=[chat], outputs=[chat]).success(
@@ -233,9 +243,8 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
                 gr.update(interactive=False),
                 gr.update(open=False),
                 gr.update(interactive=False),
-                gr.update(interactive=False),
             ),
-            outputs=[solution_acc, end_btn, problem_acc, audio_input, send_btn],
+            outputs=[solution_acc, end_btn, problem_acc, audio_input],
         ).success(
             fn=lambda: (gr.update(visible=True)),
             outputs=[feedback_acc],
@@ -243,31 +252,25 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
             fn=llm.end_interview, inputs=[description, chat_history, interview_type_select], outputs=[feedback]
         )
 
-        send_btn.click(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).success(
-            fn=lambda: None, outputs=[message]
+        audio_input.stream(
+            stt.process_audio_chunk,
+            inputs=[audio_input, audio_buffer],
+            outputs=[audio_buffer, audio_to_transcribe],
+            show_progress="hidden",
+        ).success(fn=stt.transcribe_audio, inputs=[audio_to_transcribe, message], outputs=[message], show_progress="hidden")
+
+        # TODO: find a way to remove delay
+        audio_input.stop_recording(fn=lambda: time.sleep(2)).success(
+            fn=add_candidate_message, inputs=[message, chat], outputs=[chat]
         ).success(
             fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
             outputs=[chat_history, chat, previous_code, audio_output],
-            # ).success(
-            #     fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
         ).success(
             fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
         ).success(
-            fn=lambda: {"words": [], "not_confirmed": 0, "last_cutoff": 0, "text": ""}, outputs=[transcript]
+            lambda: "", outputs=[message]
         )
-
-        if stt.streaming:
-            audio_input.stream(
-                stt.process_audio_chunk,
-                inputs=[audio_input, audio_buffer, transcript],
-                outputs=[transcript, audio_buffer, message],
-                show_progress="hidden",
-            )
-        else:
-            audio_input.stop_recording(fn=stt.speech_to_text_full, inputs=[audio_input], outputs=[message]).success(
-                fn=lambda: gr.update(interactive=True), outputs=[send_btn]
-            ).success(fn=lambda: None, outputs=[audio_input])
 
         interview_type_select.change(
             fn=lambda x: gr.update(choices=topic_lists[x], value=np.random.choice(topic_lists[x])),
