@@ -11,12 +11,21 @@ from functools import partial
 
 
 def send_request(
-    code: str, previous_code: str, chat_history: List[Dict[str, str]], chat_display: List[List[Optional[str]]], llm, tts
+    code: str,
+    previous_code: str,
+    chat_history: List[Dict[str, str]],
+    chat_display: List[List[Optional[str]]],
+    llm,
+    tts,
+    silent: Optional[bool] = False,
 ) -> Generator[Tuple[List[Dict[str, str]], List[List[Optional[str]]], str, bytes], None, None]:
     """
     Send a request to the LLM and update the chat display and translate it to speech.
     """
     # TODO: Find the way to simplify it and remove duplication in logic
+    if silent is None:
+        silent = os.getenv("SILENT", False)
+
     chat_history = llm.update_chat_history(code, previous_code, chat_history, chat_display)
     original_len = len(chat_display)
     chat_display.append([None, ""])
@@ -27,11 +36,11 @@ def send_request(
 
     audio_generator = iter(())
     has_text_item = True
-    has_audion_item = True
+    has_audio_item = not silent
     audio_created = 0
     is_notes = False
 
-    while has_text_item or has_audion_item:
+    while has_text_item or has_audio_item:
         try:
             text_chunk = next(reply)
             text_chunks.append(text_chunk)
@@ -40,12 +49,15 @@ def send_request(
             has_text_item = False
             chat_history[-1]["content"] = "".join(text_chunks)
 
-        try:
-            audio_chunk = next(audio_generator)
-            has_audion_item = True
-        except StopIteration:
+        if silent:
             audio_chunk = b""
-            has_audion_item = False
+        else:
+            try:
+                audio_chunk = next(audio_generator)
+                has_audio_item = True
+            except StopIteration:
+                audio_chunk = b""
+                has_audio_item = False
 
         if has_text_item and not is_notes:
             last_message = chat_display[-1][1]
@@ -60,10 +72,11 @@ def send_request(
             for m in split_messages[1:]:
                 chat_display.append([None, m])
 
-        if len(chat_display) - original_len > audio_created + has_text_item:
-            audio_generator = chain(audio_generator, tts.read_text(chat_display[original_len + audio_created][1]))
-            audio_created += 1
-            has_audion_item = True
+        if not silent:
+            if len(chat_display) - original_len > audio_created + has_text_item:
+                audio_generator = chain(audio_generator, tts.read_text(chat_display[original_len + audio_created][1]))
+                audio_created += 1
+                has_audio_item = True
 
         yield chat_history, chat_display, code, audio_chunk
 

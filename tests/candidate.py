@@ -12,6 +12,7 @@ from utils.config import Config
 from resources.data import fixed_messages, topic_lists
 from resources.prompts import prompts
 from tests.testing_prompts import candidate_prompt
+from ui.coding import send_request
 
 
 def complete_interview(
@@ -118,8 +119,8 @@ def complete_interview(
         chat_display.append([candidate_message, None])
 
         send_time = time.time()
-        for messages_interviewer, chat_display, previous_code in llm.send_request(
-            candidate_message, previous_code, messages_interviewer, chat_display
+        for messages_interviewer, chat_display, previous_code, _ in send_request(
+            candidate_message, previous_code, messages_interviewer, chat_display, llm, tts=None, silent=True
         ):
             pass
 
