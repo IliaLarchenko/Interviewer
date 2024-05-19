@@ -3,3 +3,4 @@ openai==1.19.0
 python-dotenv==1.0.1
 pytest==8.2.0
 webrtcvad==2.0.10
+setuptools==69.5.1
