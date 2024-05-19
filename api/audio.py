@@ -41,7 +41,7 @@ class STTManager:
 
         self.config = config
         self.status = self.test_stt()
-        self.streaming = self.test_streaming()
+        self.streaming = self.status
 
     def numpy_audio_to_bytes(self, audio_data: np.ndarray) -> bytes:
         """
@@ -70,8 +70,7 @@ class STTManager:
 
         :param audio: Tuple containing the sample rate and audio data as numpy array.
         :param audio_buffer: Current audio buffer as numpy array.
-        :param transcript: Current transcript dictionary.
-        :return: Updated transcript, updated audio buffer, and transcript text.
+        :return: Updated current audio buffer, audio for transcription
         """
 
         has_voice = detect_voice(audio[1])
@@ -87,69 +86,19 @@ class STTManager:
 
         return np.array([], dtype=np.int16), audio_buffer
 
-    def transcribe_audio(self, audio: np.ndarray, text) -> str:
+    def transcribe_audio(self, audio: np.ndarray, text: str = "") -> str:
         if len(audio) < 500:
             return text
         else:
             transcript = self.transcribe_numpy_array(audio, context=text)
             return text + " " + transcript
 
-    def speech_to_text_stream(self, audio: bytes) -> List[Dict[str, str]]:
-        """
-        Convert speech to text from a byte stream using streaming.
-
-        :param audio: Bytes representation of audio data.
-        :return: List of dictionaries containing transcribed words and their timestamps.
-        """
-        if self.config.stt.type == "HF_API":
-            raise APIError("STT Error: Streaming not supported for this STT type")
-        try:
-            data = ("temp.wav", audio, "audio/wav")
-            client = OpenAI(base_url=self.config.stt.url, api_key=self.config.stt.key)
-            transcription = client.audio.transcriptions.create(
-                model=self.config.stt.name, file=data, response_format="verbose_json", timestamp_granularities=["word"]
-            )
-        except APIError:
-            raise
-        except Exception as e:
-            raise APIError(f"STT Error: Unexpected error: {e}")
-        return transcription.words
-
-    def merge_transcript(self, transcript: Dict, new_transcript: List[Dict[str, str]]) -> Dict:
-        """
-        Merge new transcript data with the existing transcript.
-
-        :param transcript: Existing transcript dictionary.
-        :param new_transcript: New transcript data to merge.
-        :return: Updated transcript dictionary.
-        """
-        cut_off = transcript["last_cutoff"]
-        transcript["last_cutoff"] = self.MAX_RELIABILITY_CUTOFF - self.STEP_LENGTH
-
-        transcript["words"] = transcript["words"][: len(transcript["words"]) - transcript["not_confirmed"]]
-        transcript["not_confirmed"] = 0
-        first_word = True
-
-        for word_dict in new_transcript:
-            if word_dict["start"] >= cut_off:
-                if first_word:
-                    if len(transcript["words"]) > 0 and transcript["words"][-1] == word_dict["word"]:
-                        continue
-                first_word = False
-                transcript["words"].append(word_dict["word"])
-                if word_dict["start"] > self.MAX_RELIABILITY_CUTOFF:
-                    transcript["not_confirmed"] += 1
-                else:
-                    transcript["last_cutoff"] = max(1.0, word_dict["end"] - self.STEP_LENGTH)
-
-        transcript["text"] = " ".join(transcript["words"])
-        return transcript
-
     def transcribe_numpy_array(self, audio: np.ndarray, context: Optional[str] = None) -> str:
         """
         Convert speech to text from a full audio segment.
 
         :param audio: Tuple containing the sample rate and audio data as numpy array.
+        :param context: Optional context for the transcription.
         :return: Transcribed text.
         """
         audio_bytes = self.numpy_audio_to_bytes(audio)
@@ -183,19 +132,7 @@ class STTManager:
         :return: True if the STT service is working, False otherwise.
         """
         try:
-            self.speech_to_text_full((48000, np.zeros(10000)))
-            return True
-        except:
-            return False
-
-    def test_streaming(self) -> bool:
-        """
-        Test if the STT streaming service is working correctly.
-
-        :return: True if the STT streaming service is working, False otherwise.
-        """
-        try:
-            self.speech_to_text_stream(self.numpy_audio_to_bytes(np.zeros(10000)))
+            self.transcribe_audio(np.zeros(10000))
             return True
         except:
             return False
