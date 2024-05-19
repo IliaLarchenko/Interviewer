@@ -59,11 +59,9 @@ class LLMManager:
                 response = self.client.chat.completions.create(
                     model=self.config.llm.name, messages=messages, temperature=1, stream=True, max_tokens=2000
                 )
-                text = ""
                 for chunk in response:
                     if chunk.choices[0].delta.content:
-                        text += chunk.choices[0].delta.content
-                    yield text
+                        yield chunk.choices[0].delta.content
         except Exception as e:
             raise APIError(f"LLM Get Text Error: Unexpected error: {e}")
 
@@ -109,7 +107,10 @@ class LLMManager:
         Get a problem from the LLM based on the given requirements, difficulty, and topic.
         """
         messages = self.get_problem_prepare_messages(requirements, difficulty, topic, interview_type)
-        yield from self.get_text(messages)
+        problem = ""
+        for text in self.get_text(messages):
+            problem += text
+            yield problem
 
     def update_chat_history(
         self, code: str, previous_code: str, chat_history: List[Dict[str, str]], chat_display: List[List[Optional[str]]]
@@ -122,29 +123,6 @@ class LLMManager:
             message += "\nMY NOTES AND CODE:\n" + code
         chat_history.append({"role": "user", "content": message})
         return chat_history
-
-    def send_request(
-        self, code: str, previous_code: str, chat_history: List[Dict[str, str]], chat_display: List[List[Optional[str]]]
-    ) -> Generator[Tuple[List[Dict[str, str]], List[List[Optional[str]]], str], None, None]:
-        """
-        Send a request to the LLM and update the chat display.
-        """
-        chat_history = self.update_chat_history(code, previous_code, chat_history, chat_display)
-        original_len = len(chat_display)
-        chat_history.append({"role": "assistant", "content": ""})
-        reply = self.get_text(chat_history)
-        for message in reply:
-            chat_history[-1]["content"] = message
-            text_to_display = message.split("#NOTES#")[0].strip()
-            split_messages = text_to_display.split("\n\n")
-            chat_display = chat_display[:original_len]
-            for m in split_messages:
-                if m.strip():
-                    chat_display.append([None, m])
-            if len(chat_display) == original_len:
-                chat_display.append([None, ""])
-
-            yield chat_history, chat_display, code
 
     def end_interview_prepare_messages(
         self, problem_description: str, chat_history: List[Dict[str, str]], interview_type: str
@@ -171,4 +149,7 @@ class LLMManager:
             yield "No interview history available"
             return
         messages = self.end_interview_prepare_messages(problem_description, chat_history, interview_type)
-        yield from self.get_text(messages)
+        feedback = ""
+        for text in self.get_text(messages):
+            feedback += text
+            yield feedback

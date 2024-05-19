@@ -2,8 +2,70 @@ import gradio as gr
 import numpy as np
 import os
 
+from itertools import chain
+
 from resources.data import fixed_messages, topic_lists
 from utils.ui import add_candidate_message, add_interviewer_message
+from typing import List, Dict, Generator, Optional, Tuple
+from functools import partial
+
+
+def send_request(
+    code: str, previous_code: str, chat_history: List[Dict[str, str]], chat_display: List[List[Optional[str]]], llm, tts
+) -> Generator[Tuple[List[Dict[str, str]], List[List[Optional[str]]], str, bytes], None, None]:
+    """
+    Send a request to the LLM and update the chat display and translate it to speech.
+    """
+    # TODO: Find the way to simplify it and remove duplication in logic
+    chat_history = llm.update_chat_history(code, previous_code, chat_history, chat_display)
+    original_len = len(chat_display)
+    chat_display.append([None, ""])
+    chat_history.append({"role": "assistant", "content": ""})
+
+    text_chunks = []
+    reply = llm.get_text(chat_history)
+
+    audio_generator = iter(())
+    has_text_item = True
+    has_audion_item = True
+    audio_created = 0
+    is_notes = False
+
+    while has_text_item or has_audion_item:
+        try:
+            text_chunk = next(reply)
+            text_chunks.append(text_chunk)
+            has_text_item = True
+        except StopIteration:
+            has_text_item = False
+            chat_history[-1]["content"] = "".join(text_chunks)
+
+        try:
+            audio_chunk = next(audio_generator)
+            has_audion_item = True
+        except StopIteration:
+            audio_chunk = b""
+            has_audion_item = False
+
+        if has_text_item and not is_notes:
+            last_message = chat_display[-1][1]
+            last_message += text_chunk
+
+            split_notes = last_message.split("#NOTES#")
+            if len(split_notes) > 1:
+                is_notes = True
+            last_message = split_notes[0]
+            split_messages = last_message.split("\n\n")
+            chat_display[-1][1] = split_messages[0]
+            for m in split_messages[1:]:
+                chat_display.append([None, m])
+
+        if len(chat_display) - original_len > audio_created + has_text_item:
+            audio_generator = chain(audio_generator, tts.read_text(chat_display[original_len + audio_created][1]))
+            audio_created += 1
+            has_audion_item = True
+
+        yield chat_history, chat_display, code, audio_chunk
 
 
 def change_code_area(interview_type):
@@ -25,6 +87,8 @@ def change_code_area(interview_type):
 
 
 def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
+    send_request_partial = partial(send_request, llm=llm, tts=tts)
+
     with gr.Tab("Interview", render=False, elem_id=f"tab") as problem_tab:
         chat_history = gr.State([])
         previous_code = gr.State("")
@@ -169,11 +233,11 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
         send_btn.click(fn=add_candidate_message, inputs=[message, chat], outputs=[chat]).success(
             fn=lambda: None, outputs=[message]
         ).success(
-            fn=llm.send_request,
+            fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
-            outputs=[chat_history, chat, previous_code],
-        ).success(
-            fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
+            outputs=[chat_history, chat, previous_code, audio_output],
+            # ).success(
+            #     fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
         ).success(
             fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
         ).success(
@@ -187,7 +251,6 @@ def get_problem_solving_ui(llm, tts, stt, default_audio_params, audio_output):
                 outputs=[transcript, audio_buffer, message],
                 show_progress="hidden",
             )
-            audio_input.stop_recording(fn=lambda: gr.update(interactive=True), outputs=[send_btn])
         else:
             audio_input.stop_recording(fn=stt.speech_to_text_full, inputs=[audio_input], outputs=[message]).success(
                 fn=lambda: gr.update(interactive=True), outputs=[send_btn]
