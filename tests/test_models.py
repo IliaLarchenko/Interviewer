@@ -4,9 +4,6 @@ from api.audio import STTManager, TTSManager
 from api.llm import LLMManager
 from utils.config import Config
 
-# Simple placeholder tests so far
-# TODO: add more tests including LLM based
-
 
 @pytest.fixture
 def app_config():

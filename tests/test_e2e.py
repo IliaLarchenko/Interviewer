@@ -31,6 +31,7 @@ def test_complete_interview() -> None:
         futures = [executor.submit(complete_and_grade_interview, it) for it in interview_types]
 
         # Test edge cases: empty, gibberish, repeat for one random interview type each
+        # The test are placeholders for not, I will increase thresholds later
         futures.append(executor.submit(complete_and_grade_interview, random.choice(interview_types), mode="empty", min_score=0.0))
         futures.append(executor.submit(complete_and_grade_interview, random.choice(interview_types), mode="gibberish", min_score=0.0))
         futures.append(executor.submit(complete_and_grade_interview, random.choice(interview_types), mode="repeat", min_score=0.0))
