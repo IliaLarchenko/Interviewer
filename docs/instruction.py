@@ -9,6 +9,9 @@ instruction = {
     "introduction": """
 # Welcome to the AI Mock Interviewer!
 
+You can try this service in the demo mode here: [AI Interviewer](https://huggingface.co/spaces/IliaLarchenko/interviewer)
+But for the good experience you need to run it locally.
+
 This tool is designed to help you practice various technical interviews by simulating real interview experiences. 
 Now, you can enhance your skills not only in coding but also in system design, machine learning system design, and other specialized topics. 
 Here you can brush your interview skills in a realistic setting, although it’s not intended to replace thorough preparations like studying algorithms or practicing coding problems.
@@ -247,6 +250,8 @@ tags:
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
 
 """
+
+if __name__ == "__main__":
     with open("README.md", "w") as f:
         f.write(spaces_config)
 
