@@ -3,7 +3,7 @@
 instruction = {
     "demo": """
 <span style="color: red;">
-    This demo uses a free tier server and free API with strict request limits and limited capabilities for some models. For a significantly better experience, run the service locally. The demo performance is worse than of a locally running service (slow, buggy, robotic voice, too short messages, etc.). If some model is unavailable, please wait a minute before retrying. Persistent unavailability might mean that the request limit has been reached and demo is unavailable for a while. 
+    This service is running in demo mode with limited performance. For a better experience, run the service locally, please refer to the Instructions tab for more details.
 </span>
     """,
     "introduction": """

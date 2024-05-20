@@ -8,9 +8,6 @@ from utils.ui import get_status_color
 
 def get_instructions_ui(llm, tts, stt, default_audio_params):
     with gr.Tab("Instruction", render=False) as instruction_tab:
-        if os.getenv("IS_DEMO"):
-            gr.Markdown(instruction["demo"])
-
         with gr.Row():
             with gr.Column(scale=2):
                 gr.Markdown(instruction["introduction"])
