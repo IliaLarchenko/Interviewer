@@ -3,7 +3,7 @@
 instruction = {
     "demo": """
 <span style="color: red;">
-    This service is running in demo mode with limited performance. For a better experience, run the service locally, please refer to the Instruction tab for more details.
+    This service is running in demo mode with limited performance (eg. slow voice recognition). For a better experience, run the service locally, refer to the Instruction tab for more details.
 </span>
     """,
     "introduction": """
