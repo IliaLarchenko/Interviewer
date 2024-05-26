@@ -10,6 +10,8 @@ from utils.errors import APIError, AudioConversionError
 from typing import List, Dict, Optional, Generator, Tuple
 import webrtcvad
 
+from transformers import pipeline
+
 
 def detect_voice(audio: np.ndarray, sample_rate: int = 48000, frame_duration: int = 30) -> bool:
     vad = webrtcvad.Vad()
@@ -42,6 +44,9 @@ class STTManager:
         self.config = config
         self.status = self.test_stt()
         self.streaming = self.status
+
+        if config.stt.type == "HF_LOCAL":
+            self.pipe = pipeline("automatic-speech-recognition", model=config.stt.name)
 
     def numpy_audio_to_bytes(self, audio_data: np.ndarray) -> bytes:
         """
@@ -79,7 +84,7 @@ class STTManager:
         if has_voice:
             audio_buffer = np.concatenate((audio_buffer, audio[1]))
 
-        is_short = len(audio_buffer) / 48000 < 1.0
+        is_short = len(audio_buffer) / self.SAMPLE_RATE < 1.0
 
         if is_short or (has_voice and not ended):
             return audio_buffer, np.array([], dtype=np.int16)
@@ -101,15 +106,16 @@ class STTManager:
         :param context: Optional context for the transcription.
         :return: Transcribed text.
         """
-        audio_bytes = self.numpy_audio_to_bytes(audio)
         try:
             if self.config.stt.type == "OPENAI_API":
+                audio_bytes = self.numpy_audio_to_bytes(audio)
                 data = ("temp.wav", audio_bytes, "audio/wav")
                 client = OpenAI(base_url=self.config.stt.url, api_key=self.config.stt.key)
                 transcription = client.audio.transcriptions.create(
                     model=self.config.stt.name, file=data, response_format="text", prompt=context
                 )
             elif self.config.stt.type == "HF_API":
+                audio_bytes = self.numpy_audio_to_bytes(audio)
                 headers = {"Authorization": "Bearer " + self.config.stt.key}
                 response = requests.post(self.config.stt.url, headers=headers, data=audio_bytes)
                 if response.status_code != 200:
@@ -118,6 +124,9 @@ class STTManager:
                 transcription = response.json().get("text", None)
                 if transcription is None:
                     raise APIError("STT Error: No transcription returned by HF API")
+            elif self.config.stt.type == "HF_LOCAL":
+                result = self.pipe({"sampling_rate": self.SAMPLE_RATE, "raw": audio.astype(np.float32) / 32768.0})
+                transcription = result["text"]
         except APIError:
             raise
         except Exception as e:
