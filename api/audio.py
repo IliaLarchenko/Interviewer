@@ -7,7 +7,7 @@ import requests
 from openai import OpenAI
 
 from utils.errors import APIError, AudioConversionError
-from typing import List, Dict, Optional, Generator, Tuple
+from typing import List, Optional, Generator, Tuple
 import webrtcvad
 
 from transformers import pipeline
