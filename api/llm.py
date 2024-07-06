@@ -1,5 +1,6 @@
 import os
 from openai import OpenAI
+import anthropic
 from utils.errors import APIError
 from typing import List, Dict, Generator, Optional, Tuple
 
@@ -37,7 +38,13 @@ class PromptManager:
 class LLMManager:
     def __init__(self, config, prompts: Dict[str, str]):
         self.config = config
-        self.client = OpenAI(base_url=config.llm.url, api_key=config.llm.key)
+        self.llm_type = config.llm.type
+        if self.llm_type == "ANTHROPIC_API":
+            self.client = anthropic.Anthropic(api_key=config.llm.key)
+        else:
+            # all other API types suppose to support OpenAI format
+            self.client = OpenAI(base_url=config.llm.url, api_key=config.llm.key)
+
         self.prompt_manager = PromptManager(prompts)
 
         self.status = self.test_llm(stream=False)
@@ -50,20 +57,54 @@ class LLMManager:
         if stream is None:
             stream = self.streaming
         try:
-            if not stream:
-                response = self.client.chat.completions.create(
-                    model=self.config.llm.name, messages=messages, temperature=1, max_tokens=2000
-                )
-                yield response.choices[0].message.content.strip()
-            else:
-                response = self.client.chat.completions.create(
-                    model=self.config.llm.name, messages=messages, temperature=1, stream=True, max_tokens=2000
-                )
-                for chunk in response:
-                    if chunk.choices[0].delta.content:
-                        yield chunk.choices[0].delta.content
+            if self.llm_type == "OPENAI_API":
+                return self._get_text_openai(messages, stream)
+            elif self.llm_type == "ANTHROPIC_API":
+                return self._get_text_anthropic(messages, stream)
         except Exception as e:
             raise APIError(f"LLM Get Text Error: Unexpected error: {e}")
+
+    def _get_text_openai(self, messages: List[Dict[str, str]], stream: bool) -> Generator[str, None, None]:
+        if not stream:
+            response = self.client.chat.completions.create(model=self.config.llm.name, messages=messages, temperature=1, max_tokens=2000)
+            yield response.choices[0].message.content.strip()
+        else:
+            response = self.client.chat.completions.create(
+                model=self.config.llm.name, messages=messages, temperature=1, stream=True, max_tokens=2000
+            )
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+
+    def _get_text_anthropic(self, messages: List[Dict[str, str]], stream: bool) -> Generator[str, None, None]:
+        # I convert the messages every time to the Anthropics format
+        # It is not optimal way to do it, we can instead support the messages format from the beginning
+        # But it duplicates the code and I don't want to do it now
+        system_message = None
+        consolidated_messages = []
+
+        for message in messages:
+            if message["role"] == "system":
+                if system_message is None:
+                    system_message = message["content"]
+                else:
+                    system_message += "\n" + message["content"]
+            else:
+                if consolidated_messages and consolidated_messages[-1]["role"] == message["role"]:
+                    consolidated_messages[-1]["content"] += "\n" + message["content"]
+                else:
+                    consolidated_messages.append(message.copy())
+
+        if not stream:
+            response = self.client.messages.create(
+                model=self.config.llm.name, max_tokens=2000, temperature=1, system=system_message, messages=consolidated_messages
+            )
+            yield response.content[0].text
+        else:
+            with self.client.messages.stream(
+                model=self.config.llm.name, max_tokens=2000, temperature=1, system=system_message, messages=consolidated_messages
+            ) as stream:
+                yield from stream.text_stream
 
     def test_llm(self, stream=False) -> bool:
         """
