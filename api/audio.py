@@ -171,6 +171,10 @@ class TTSManager:
         :param stream: Whether to use streaming or not.
         :return: Generator yielding chunks of audio bytes.
         """
+
+        if not text:
+            yield b""
+
         if stream is None:
             stream = self.streaming
 
