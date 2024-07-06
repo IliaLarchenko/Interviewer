@@ -3,6 +3,35 @@ from typing import Dict, Any, List
 from openai import OpenAI
 from tests.testing_prompts import grader_prompt
 
+BASE_URL = "https://api.openai.com/v1"
+JSON_INDENT = 4
+
+
+def format_interview_data(interview_data):
+    return [
+        f"Interview type: {interview_data['inputs']['interview_type']}",
+        f"Interview difficulty: {interview_data['inputs']['difficulty']}",
+        f"Interview topic: {interview_data['inputs']['topic']}",
+    ]
+
+
+def generate_interview_summary(interview_data: Dict[str, Any]) -> List[str]:
+    """
+    Generate a summary of the interview data.
+
+    :param interview_data: Dictionary containing interview data.
+    :return: List of summary strings.
+    """
+    summary = format_interview_data(interview_data)
+    if interview_data["inputs"]["requirements"]:
+        summary.append(f"Interview requirements: {interview_data['inputs']['requirements']}")
+    summary.append(f"Problem statement proposed by interviewer: {interview_data['problem_statement']}")
+    summary.append(f"\nTranscript of the whole interview below:")
+    summary += interview_data["transcript"]
+    summary.append(f"\nTHE MAIN PART OF THE INTERVIEW ENDED HERE.")
+    summary.append(f"Feedback provided by interviewer: {interview_data['feedback']}")
+    return summary
+
 
 def grade(json_file_path: str, model: str = "gpt-4o", suffix: str = "") -> Dict[str, Any]:
     """
@@ -13,9 +42,13 @@ def grade(json_file_path: str, model: str = "gpt-4o", suffix: str = "") -> Dict[
     :param suffix: Suffix to add to the feedback file name.
     :return: Feedback dictionary.
     """
-    client = OpenAI(base_url="https://api.openai.com/v1")
-    with open(json_file_path) as file:
-        interview_data = json.load(file)
+    try:
+        with open(json_file_path) as file:
+            interview_data = json.load(file)
+    except FileNotFoundError:
+        return {"error": "File not found"}
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON format"}
 
     interview_summary_list = generate_interview_summary(interview_data)
 
@@ -24,8 +57,7 @@ def grade(json_file_path: str, model: str = "gpt-4o", suffix: str = "") -> Dict[
         {"role": "user", "content": f"Please evaluate the interviewer based on the following data: \n {'\n'.join(interview_summary_list)}"},
     ]
 
-    response = client.chat.completions.create(model=model, messages=messages, temperature=0, response_format={"type": "json_object"})
-    feedback = json.loads(response.choices[0].message.content)
+    feedback = call_openai_api(messages, model)
 
     populate_feedback_metadata(feedback, json_file_path, interview_data, model)
     calculate_overall_score(feedback)
@@ -35,26 +67,10 @@ def grade(json_file_path: str, model: str = "gpt-4o", suffix: str = "") -> Dict[
     return feedback
 
 
-def generate_interview_summary(interview_data: Dict[str, Any]) -> List[str]:
-    """
-    Generate a summary of the interview data.
-
-    :param interview_data: Dictionary containing interview data.
-    :return: List of summary strings.
-    """
-    summary = [
-        f"Interview type: {interview_data['inputs']['interview_type']}",
-        f"Interview difficulty: {interview_data['inputs']['difficulty']}",
-        f"Interview topic: {interview_data['inputs']['topic']}",
-    ]
-    if interview_data["inputs"]["requirements"]:
-        summary.append(f"Interview requirements: {interview_data['inputs']['requirements']}")
-    summary.append(f"Problem statement proposed by interviewer: {interview_data['problem_statement']}")
-    summary.append(f"\nTranscript of the whole interview below:")
-    summary += interview_data["transcript"]
-    summary.append(f"\nTHE MAIN PART OF THE INTERVIEW ENDED HERE.")
-    summary.append(f"Feedback provided by interviewer: {interview_data['feedback']}")
-    return summary
+def call_openai_api(messages, model):
+    client = OpenAI(base_url=BASE_URL)
+    response = client.chat.completions.create(model=model, messages=messages, temperature=0, response_format={"type": "json_object"})
+    return json.loads(response.choices[0].message.content)
 
 
 def populate_feedback_metadata(feedback: Dict[str, Any], json_file_path: str, interview_data: Dict[str, Any], model: str) -> None:
@@ -104,4 +120,4 @@ def save_feedback(json_file_path: str, feedback: Dict[str, Any], suffix: str) ->
     :param suffix: Suffix to add to the feedback file name.
     """
     with open(json_file_path.replace(".json", f"_feedback_{suffix}.json"), "w") as file:
-        json.dump(feedback, file, indent=4)
+        json.dump(feedback, file, indent=JSON_INDENT)
