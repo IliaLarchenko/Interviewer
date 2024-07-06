@@ -5,4 +5,4 @@ pytest==8.2.0
 webrtcvad==2.0.10
 setuptools==69.5.1
 transformers==4.40.0
-anthropic=0.30.1
+anthropic==0.30.1
