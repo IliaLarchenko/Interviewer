@@ -175,36 +175,37 @@ class TTSManager:
         if not text:
             yield b""
 
-        if stream is None:
-            stream = self.streaming
+        else:
+            if stream is None:
+                stream = self.streaming
 
-        headers = {"Authorization": "Bearer " + self.config.tts.key}
-        data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
+            headers = {"Authorization": "Bearer " + self.config.tts.key}
+            data = {"model": self.config.tts.name, "input": text, "voice": "alloy", "response_format": "opus"}
 
-        try:
-            if not stream:
-                if self.config.tts.type == "OPENAI_API":
-                    response = requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data)
-                elif self.config.tts.type == "HF_API":
-                    response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
+            try:
+                if not stream:
+                    if self.config.tts.type == "OPENAI_API":
+                        response = requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data)
+                    elif self.config.tts.type == "HF_API":
+                        response = requests.post(self.config.tts.url, headers=headers, json={"inputs": text})
 
-                if response.status_code != 200:
-                    error_details = response.json().get("error", "No error message provided")
-                    raise APIError(f"TTS Error: {self.config.tts.type} error", status_code=response.status_code, details=error_details)
-                yield response.content
-            else:
-                if self.config.tts.type != "OPENAI_API":
-                    raise APIError("TTS Error: Streaming not supported for this TTS type")
-
-                with requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data, stream=True) as response:
                     if response.status_code != 200:
                         error_details = response.json().get("error", "No error message provided")
-                        raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
-                    yield from response.iter_content(chunk_size=1024)
-        except APIError:
-            raise
-        except Exception as e:
-            raise APIError(f"TTS Error: Unexpected error: {e}")
+                        raise APIError(f"TTS Error: {self.config.tts.type} error", status_code=response.status_code, details=error_details)
+                    yield response.content
+                else:
+                    if self.config.tts.type != "OPENAI_API":
+                        raise APIError("TTS Error: Streaming not supported for this TTS type")
+
+                    with requests.post(self.config.tts.url + "/audio/speech", headers=headers, json=data, stream=True) as response:
+                        if response.status_code != 200:
+                            error_details = response.json().get("error", "No error message provided")
+                            raise APIError("TTS Error: OPENAI API error", status_code=response.status_code, details=error_details)
+                        yield from response.iter_content(chunk_size=1024)
+            except APIError:
+                raise
+            except Exception as e:
+                raise APIError(f"TTS Error: Unexpected error: {e}")
 
     def read_last_message(self, chat_history: List[List[Optional[str]]]) -> Generator[bytes, None, None]:
         """
