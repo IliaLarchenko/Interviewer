@@ -9,8 +9,9 @@ instruction = {
     "introduction": """
 # Welcome to the AI Mock Interviewer!
 
-You can try this service in the demo mode here: [AI Interviewer](https://huggingface.co/spaces/IliaLarchenko/interviewer)
-But for the good experience you need to run it locally.
+You can try this service in the demo mode here: [AI Interviewer](https://huggingface.co/spaces/IliaLarchenko/interviewer).
+
+But for the good experience you need to run it locally [Project repository](https://github.com/IliaLarchenko/Interviewer).
 
 This tool is designed to help you practice various technical interviews by simulating real interview experiences. 
 Now, you can enhance your skills not only in coding but also in system design, machine learning system design, and other specialized topics. 
