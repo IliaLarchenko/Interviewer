@@ -1,3 +1,5 @@
+interview_types = ["coding", "ml_design", "ml_theory", "system_design", "math", "sql", "custom"]
+
 topic_lists = {
     "coding": [
         "Arrays",
@@ -111,6 +113,9 @@ topic_lists = {
         "Generative Adversarial Networks",
         "Transfer Learning",
         "Explainable AI",
+    ],
+    "custom": [
+        "Specify any topic",
     ],
 }
 

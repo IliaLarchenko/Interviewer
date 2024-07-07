@@ -5,7 +5,7 @@ import os
 from itertools import chain
 import time
 
-from resources.data import fixed_messages, topic_lists
+from resources.data import fixed_messages, topic_lists, interview_types
 from utils.ui import add_candidate_message, add_interviewer_message
 from typing import List, Dict, Generator, Optional, Tuple
 from functools import partial
@@ -127,7 +127,7 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
                 interview_type_select = gr.Dropdown(
                     show_label=False,
                     info="Type of the interview.",
-                    choices=["coding", "ml_design", "ml_theory", "system_design", "math", "sql"],
+                    choices=interview_types,
                     value="coding",
                     container=True,
                     allow_custom_value=False,

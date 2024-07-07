@@ -292,4 +292,7 @@ Provide specific feedback with examples from the interview, offering corrections
 Provide detailed feedback, highlighting strengths and areas where understanding is lacking, supported by specific examples from the interview. Suggest targeted resources or study areas to help candidates improve. Summarize key points at the end of your feedback, focusing on actionable steps for improvement and further learning.
 """
     ),
+    "custom_problem_generation_prompt": base_problem_generation,
+    "custom_interviewer_prompt": base_interviewer,
+    "custom_grading_feedback_prompt": base_grading_feedback,
 }
