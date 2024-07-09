@@ -87,10 +87,11 @@ def send_request(
                 audio_created += 1
                 has_audio_item = True
 
-        if chat_display and len(chat_display) > 1 and chat_display[-1][1] == "" and chat_display[-2][1]:
-            chat_display.pop()
-
         yield chat_history, chat_display, code, audio_chunk
+
+    if chat_display and len(chat_display) > 1 and chat_display[-1][1] == "" and chat_display[-2][1]:
+        chat_display.pop()
+        yield chat_history, chat_display, code, b""
 
 
 def change_code_area(interview_type):
