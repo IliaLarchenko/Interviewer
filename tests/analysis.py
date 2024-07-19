@@ -137,7 +137,7 @@ def run_evaluation(
     interview_types: Optional[List[str]] = None,
     grader_models: Optional[List[str]] = None,
     llm_configs: Optional[List[Any]] = None,
-    candidate_model: str = "gpt-3.5-turbo",
+    candidate_model: str = "gpt-4o-mini",
     num_workers: int = 3,
 ) -> str:
     """

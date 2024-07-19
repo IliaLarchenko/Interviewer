@@ -13,7 +13,7 @@ def complete_and_grade_interview(interview_type: str, mode: str = "normal", min_
     :param mode: Mode of the interview ("normal", "empty", "gibberish", "repeat").
     :return: Overall score of the interview.
     """
-    file_path, _ = complete_interview(interview_type, "test", model="gpt-3.5-turbo", mode=mode)
+    file_path, _ = complete_interview(interview_type, "test", model="gpt-4o-mini", mode=mode)
     feedback = grade(file_path, model="gpt-4-turbo")
     assert feedback["overall_score"] > min_score
     return feedback["overall_score"]

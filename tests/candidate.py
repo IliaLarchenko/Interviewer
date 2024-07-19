@@ -22,7 +22,7 @@ def complete_interview(
     requirements: str = "",
     difficulty: str = "",
     topic: str = "",
-    model: str = "gpt-3.5-turbo",
+    model: str = "gpt-4o-mini",
     pause: int = 0,
     mode: str = "normal",
     max_messages: Optional[int] = None,
