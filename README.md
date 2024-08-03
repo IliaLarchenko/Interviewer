@@ -33,23 +33,22 @@ You can try this service in the demo mode here: [AI Interviewer](https://hugging
 But for the good experience you need to run it locally [Project repository](https://github.com/IliaLarchenko/Interviewer).
 
 This tool is designed to help you practice various technical interviews by simulating real interview experiences. 
-Now, you can enhance your skills not only in coding but also in system design, machine learning system design, and other specialized topics. 
-Here you can brush your interview skills in a realistic setting, although it’s not intended to replace thorough preparations like studying algorithms or practicing coding problems.
+You can enhance your skills in coding, (machine learning) system design, and other topics. 
+You can brush your interview skills in a realistic setting, although it’s not intended to replace thorough preparations like studying algorithms or practicing coding problems.
 
 ## Key Features
 
 - **Speech-First Interface**: Talk to the AI just like you would with a real interviewer. This makes your practice sessions feel more realistic.
 - **Various AI Models**: The tool uses three types of AI models:
   - **LLM (Large Language Model)**: Acts as the interviewer.
-  - **Speech-to-Text and Text-to-Speech Models**: These help mimic real conversations by converting spoken words to text and vice versa.
-- **Model Flexibility**: The tool works with many different models, including those from OpenAI, open-source models from Hugging Face, and locally running models.
-- **Streaming Mode**: The tool can use all models in streaming mode when it is supported. Instead of waiting for the full response from the AI, you can get partial responses in real-time.
-- **Expanded Interview Coverage**: The tool now supports a variety of interview types, including Coding, System Design, Machine Learning System Design, Math, Stats, and Logic, SQL, and ML Theory interviews.
+  - **Speech-to-Text and Text-to-Speech Models**: These models help to mimic real conversations by converting spoken words to text and vice versa.
+- **Model Flexibility**: You can use many different models, including those from OpenAI, open-source models from Hugging Face, and locally running models.
+- **Streaming Mode**: All models can be used in streaming mode. Instead of waiting for the full response from the AI, you can get partial responses in real-time.
 
 
 # Running the AI Tech Interviewer Simulator
 
-To get the real experience you should run the service locally and use your own API key or local model.
+To get the real experience you should run the AI interviewer locally and use your own API key or local model.
 
 ## Initial Setup
 
@@ -86,7 +85,7 @@ The application will be accessible at `http://localhost:7860`.
 
 ### Running Locally (alternative)
 
-Set up a Python environment and install dependencies to run the application locally:
+If you don't want to use Docker just set up a Python environment and install dependencies to run the application locally:
 
 ```bash
 python -m venv venv
@@ -96,21 +95,18 @@ python app.py
 ```
 
 The application should now be accessible at `http://localhost:7860`.
-    
+
 
 # Models Configuration
 
-This tool utilizes three types of AI models: a Large Language Model (LLM) for simulating interviews, a Speech-to-Text (STT) model for audio processing, and a Text-to-Speech (TTS) model for auditory feedback. You can configure each model separately to tailor the experience based on your preferences and available resources.
-
-## Flexible Model Integration
-
-You can connect various models from different sources to the tool. Whether you are using models from OpenAI, Hugging Face, or even locally hosted models, the tool is designed to be compatible with a range of APIs. Here’s how you can configure each type:
+AI Interviewer is powered by three types of AI models: a Large Language Model (LLM) for simulating interviews, a Speech-to-Text (STT) model for audio processing, and a Text-to-Speech (TTS) model to read LLM responses. You can configure each model separately to tailor the experience based on your preferences and available resources.
 
 ### Large Language Model (LLM)
 
-- **OpenAI Models**: You can use models like GPT-3.5-turbo or GPT-4 provided by OpenAI. Set up is straightforward with your OpenAI API key.
+- **OpenAI Models**: You can use models like GPT-3.5-turbo, GPT-4, GPT-4o or others provided by OpenAI. Set up is straightforward with your OpenAI API key.
 - **Hugging Face Models**: Models like Meta-Llama from Hugging Face can also be integrated. Make sure your API key has appropriate permissions.
-- **Local Models**: If you have the capability, you can run models locally. Ensure they are compatible with the Hugging Face API for seamless integration.
+- **Claude**: You can use models from Anthropic, such as Claude, for a different interview experience. Ensure you have the necessary API key and permissions.
+- **Local Models**: If you have the capability, you can run models locally using Ollama or other tools. Ensure they are compatible with the Open AI or Hugging Face API for seamless integration.
 
 ### Speech-to-Text (STT)
 
@@ -128,7 +124,7 @@ The tool uses a `.env` file for environment configuration. Here’s a breakdown 
 
 - **API Keys**: Whether using OpenAI, Hugging Face, or other services, your API key must be specified in the `.env` file. This key should have the necessary permissions to access the models you intend to use.
 - **Model URLs and Types**: Specify the API endpoint URLs for each model and their type (e.g., `OPENAI_API` for OpenAI models, `HF_API` for Hugging Face or local APIs).
-- **Model Names**: Set the specific model name, such as `gpt-3.5-turbo` or `whisper-1`, to tell the application which model to interact with.
+- **Model Names**: Set the specific model name, such as `gpt-4o` or `whisper-1`, to tell the application which model to interact with.
 
 ### Example Configuration
 
@@ -138,6 +134,13 @@ OPENAI_API_KEY=sk-YOUR_OPENAI_API_KEY
 LLM_URL=https://api.openai.com/v1
 LLM_TYPE=OPENAI_API
 LLM_NAME=gpt-3.5-turbo
+```
+
+Claude LLM:
+```plaintext
+ANTHROPIC_API_KEY=sk-ant-YOUR_ANTHROPIC_API_KEY
+LLM_TYPE=ANTHROPIC_API
+LLM_NAME=claude-3-5-sonnet-20240620
 ```
 
 Hugging face TTS:
@@ -158,19 +161,17 @@ STT_NAME=whisper-base.en
 
 You can configure each models separately. Find more examples in the `.env.example` files provided.
 
-    
-
 # Acknowledgements
 
 The service is powered by Gradio, and the demo version is hosted on HuggingFace Spaces.
 
 Even though the service can be used with great variety of models I want to specifically acknowledge a few of them:
-- **OpenAI**: For models like GPT-3.5, GPT-4, Whisper, and TTS-1. More details on their models and usage policies can be found at [OpenAI's website](https://www.openai.com).
+- **OpenAI**: For models like GPT, Whisper, and TTS-1. More details on their models and usage policies can be found at [OpenAI's website](https://www.openai.com).
 - **Meta**: For the Llama models, particularly the Meta-Llama-3-70B-Instruct, as well as Facebook-mms-tts-eng model. Visit [Meta AI](https://ai.facebook.com) for more information.
 - **HuggingFace**: For a wide range of models and APIs that greatly enhance the flexibility of this tool. For specific details on usage, refer to [Hugging Face's documentation](https://huggingface.co).
 
 Please ensure to review the specific documentation and follow the terms of service for each model and API you use, as this is crucial for responsible and compliant use of these technologies.
-    
+
 
 # Important Legal and Compliance Information
 
@@ -201,4 +202,3 @@ Contributors are required to ensure that their contributions comply with this li
 
 ## AI-Generated Content Disclaimer
 - **Nature of AI Content**: Content generated by this service is derived from artificial intelligence, utilizing models such as Large Language Models (LLM), Speech-to-Text (STT), Text-to-Speech (TTS), and other models. The service owner assumes no responsibility for the content generated by AI. This content is provided for informational or entertainment purposes only and should not be considered legally binding or factually accurate. AI-generated content does not constitute an agreement or acknowledge any factual statements or obligations.
-
