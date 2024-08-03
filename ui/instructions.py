@@ -1,5 +1,3 @@
-import os
-
 import gradio as gr
 
 from utils.ui import get_status_color
