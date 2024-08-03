@@ -11,7 +11,6 @@ from typing import List, Dict, Generator, Optional, Tuple
 from functools import partial
 from api.llm import LLMManager
 from api.audio import TTSManager, STTManager
-from docs.instruction import instruction
 
 
 def send_request(
@@ -112,12 +111,17 @@ def change_code_area(interview_type):
         )
 
 
+DEMO_MESSAGE = """<span style="color: red;"> 
+This service is running in demo mode with limited performance (e.g. slow voice recognition). For a better experience, run the service locally, refer to the Instruction tab for more details.
+</span>"""
+
+
 def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, default_audio_params: Dict, audio_output):
     send_request_partial = partial(send_request, llm=llm, tts=tts)
 
     with gr.Tab("Interview", render=False, elem_id=f"tab") as problem_tab:
         if os.getenv("IS_DEMO"):
-            gr.Markdown(instruction["demo"])
+            gr.Markdown(DEMO_MESSAGE)
         chat_history = gr.State([])
         previous_code = gr.State("")
         hi_markdown = gr.Markdown(
