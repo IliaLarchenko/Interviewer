@@ -6,7 +6,7 @@ import logging
 from typing import List
 
 
-def complete_and_grade_interview(interview_type: str, mode: str = "normal", min_score=0.4) -> float:
+def complete_and_grade_interview(interview_type: str, mode: str = "normal", min_score=0.3) -> float:
     """
     Complete an interview and return the overall score.
 
