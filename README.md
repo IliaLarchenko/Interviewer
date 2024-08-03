@@ -47,14 +47,6 @@ Here you can brush your interview skills in a realistic setting, although it’s
 - **Expanded Interview Coverage**: The tool now supports a variety of interview types, including Coding, System Design, Machine Learning System Design, Math, Stats, and Logic, SQL, and ML Theory interviews.
 
 
-## Planned Updates
-
-This is just the first beta version, and I'm working on enhancing this tool. Planned updates include:
-1. **More Interview Types**: More Interview Types: Continue to expand with additional simulations such as Behavioral Interviews and specialized technical interviews.
-2. **Testing More Models**: Exploring additional open-source models to enhance the tool’s performance and flexibility.
-3. **Improving the User Interface**: Making it easier to navigate and use, ensuring a better experience for all users.
-    
-
 # Running the AI Tech Interviewer Simulator
 
 To get the real experience you should run the service locally and use your own API key or local model.
@@ -104,35 +96,6 @@ python app.py
 ```
 
 The application should now be accessible at `http://localhost:7860`.
-    
-
-# Interview Interface Overview
-
-This tool now supports multiple types of interviews, including Coding, System Design, Machine Learning System Design, Math, Stats, and Logic, SQL, and ML Theory. 
-Each type is tailored to help you practice specific skills and knowledge areas. 
-Here's how to navigate the interface:
-
-### Setting
-Configure the interview settings such as difficulty, topic, and any specific requirements. Start the interview by clicking the **"Generate a problem"** button.
-
-### Problem Statement
-The AI will present a problem after you initiate the session.
-
-### Solution
-This section is where the interaction happens:
-- **Code/Solution Area**: On the left side, you will find a space to write your solution. For codding problem you can use any language, although syntax highlighting is only available for Python ans SQL currently.
-- **Communication Area**: On the right, this area includes:
-  - **Chat History**: Displays the entire dialogue history, showing messages from both you and the AI interviewer.
-  - **New message text box**: You recognized speech will be shown in this field. You can edit it before sending, but don't care the LLM can handle the text with all the voice recognition mistakes.  
-  - **Send Button**: Use this button to send your message and get the response from the AI.
-  - **Audio Record Button**: Use this button to record your responses. Press to start recording, speak your thoughts, and press stop to send your audio. Your message will be sent to the chat, along with a snapshot of your code or any notes from solution text area."
-
-Engage with the AI as you would with a real interviewer. Provide concise responses and frequent updates rather than long monologues. Your interactions, including any commentary on your code, will be recorded and the AI's responses will be read aloud and displayed in the chat. Follow the AI's instructions and respond to any follow-up questions as they arise.
-
-Once the interview is completed, or if you decide to end it early, click the **"Finish the interview"** button.
-
-### Feedback
-Detailed feedback will be provided in this section, helping you understand your performance and areas for improvement.  
     
 
 # Models Configuration
