@@ -87,40 +87,48 @@ def complete_interview(
     previous_code = ""
 
     if max_messages is None:
-        max_messages = 30 if mode == "normal" else 5
+        max_messages = 25 if mode == "normal" else 5
 
     for _ in range(max_messages):
+        code = ""
         if mode == "empty":
-            response_content = ""
+            candidate_message = ""
         elif mode == "gibberish":
-            response_content = "".join(random.choices(string.ascii_letters + string.digits, k=50))
+            candidate_message = "".join(random.choices(string.ascii_letters + string.digits, k=50))
         elif mode == "repeat":
-            response_content = chat_display[-1][1]
+            candidate_message = chat_display[-1][1]
         else:
             response = client.chat.completions.create(
                 model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}, stream=False
             )
             try:
                 response_json = json.loads(response.choices[0].message.content)
-                response_content = response_json.get("message", "")
+                candidate_message = response_json.get("message", "")
+                code = response_json.get("code_and_notes", "")
+                finished = response_json.get("finished", False)
+                question = response_json.get("question", False)
+
+                if finished and not question and not code:
+                    break
             except:
                 continue
 
-        candidate_message = response_content
-
-        if not candidate_message and mode != "empty":
-            print("No message in response")
+        if not candidate_message and not code and mode != "empty":
+            print("No message or code in response")
             continue
 
-        messages_candidate.append({"role": "assistant", "content": candidate_message})
-
-        interview_data["transcript"].append(f"CANDIDATE MESSAGE: {candidate_message}")
+        if candidate_message:
+            messages_candidate.append({"role": "assistant", "content": candidate_message})
+            interview_data["transcript"].append(f"CANDIDATE MESSAGE: {candidate_message}")
+        if code:
+            interview_data["transcript"].append(f"CANDIDATE CODE AND NOTES: {code}")
+            messages_candidate.append({"role": "assistant", "content": code})
 
         chat_display.append([candidate_message, None])
 
         send_time = time.time()
         for messages_interviewer, chat_display, previous_code, _ in send_request(
-            candidate_message, previous_code, messages_interviewer, chat_display, llm, tts=None, silent=True
+            code, previous_code, messages_interviewer, chat_display, llm, tts=None, silent=True
         ):
             pass
 
