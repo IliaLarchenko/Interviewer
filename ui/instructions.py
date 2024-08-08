@@ -32,8 +32,7 @@ The AI will present a problem after you initiate the session.
 This section is where the interaction happens:
 - **Code/Solution Area**: On the left side, you will find a space to write your solution. For codding problem you can use any language, although syntax highlighting is only available for Python and SQL.
 - **Communication Area**: On the right, this area includes:
-  - **Chat History**: Displays the entire dialogue history, showing messages from both you and the AI interviewer.
-  - **New message text box**: Your recognized speech will be shown in this field before sending it to the AI. It is more like a legacy text input field that will be removed in the future.  
+  - **Chat History**: Displays the entire dialogue history, showing messages from both you and the AI interviewer. Your recognized speech will be shown here before being sent to the AI.
   - **Audio Record Button**: Use this button to record your responses. Press to start recording, speak your thoughts, and press stop to send your audio. Your message will be sent to the chat, along with a snapshot of your code or any notes from solution text area."
 
 Engage with the AI as you would with a real interviewer. Provide concise responses and frequent updates rather than long monologues. Your interactions, including any commentary on your code, will be recorded and the AI's responses will be read aloud and displayed in the chat. Follow the AI's instructions and respond to any follow-up questions as they arise.
@@ -68,15 +67,6 @@ def get_instructions_ui(llm, tts, stt, default_audio_params):
             with gr.Column(scale=1):
                 chat_example = gr.Chatbot(
                     label="Chat", show_label=False, show_share_button=False, value=[["Candidate message", "Interviewer message"]]
-                )
-                message_example = gr.Textbox(
-                    label="Message",
-                    show_label=False,
-                    placeholder="Your recognized speech will be shown here",
-                    lines=5,
-                    max_lines=5,
-                    interactive=False,
-                    container=False,
                 )
                 audio_input_example = gr.Audio(interactive=True, **default_audio_params)
 

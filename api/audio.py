@@ -98,6 +98,21 @@ class STTManager:
             transcript = self.transcribe_numpy_array(audio, context=text)
             return text + " " + transcript
 
+    def transcribe_and_add_to_chat(self, audio: np.ndarray, chat: List[List[Optional[str]]]) -> List[List[Optional[str]]]:
+        """
+        Transcribe audio and add the transcription to the chat history.
+
+        :param audio: Numpy array containing audio data.
+        :param chat: List of chat messages.
+        :return: Updated chat history.
+        """
+        if len(chat) == 0 or chat[-1][0] is None:
+            chat.append(["", None])
+
+        chat[-1][0] = self.transcribe_audio(audio, chat[-1][0])
+
+        return chat
+
     def transcribe_numpy_array(self, audio: np.ndarray, context: Optional[str] = None) -> str:
         """
         Convert speech to text from a full audio segment.

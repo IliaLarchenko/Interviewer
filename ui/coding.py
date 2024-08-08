@@ -198,18 +198,6 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
                     end_btn = gr.Button("Finish the interview", interactive=False, variant="stop", elem_id=f"end_btn")
                     chat = gr.Chatbot(label="Chat", show_label=False, show_share_button=False, elem_id=f"chat")
 
-                    # I need this message box only because chat component is flickering when I am updating it
-                    # To be improved in the future
-                    message = gr.Textbox(
-                        label="Message",
-                        show_label=False,
-                        lines=5,
-                        max_lines=5,
-                        interactive=False,
-                        container=False,
-                        elem_id=f"message",
-                    )
-
                     audio_input = gr.Audio(interactive=False, **default_audio_params, elem_id=f"audio_input")
                     audio_buffer = gr.State(np.array([], dtype=np.int16))
                     audio_to_transcribe = gr.State(np.array([], dtype=np.int16))
@@ -263,25 +251,21 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
             fn=llm.end_interview, inputs=[description, chat_history, interview_type_select], outputs=[feedback]
         )
 
+        # TODO: add a counter for audio chunks to use for better delay handling
+        audio_counter = 0
         audio_input.stream(
             stt.process_audio_chunk,
             inputs=[audio_input, audio_buffer],
             outputs=[audio_buffer, audio_to_transcribe],
             show_progress="hidden",
-        ).success(fn=stt.transcribe_audio, inputs=[audio_to_transcribe, message], outputs=[message], show_progress="hidden")
+        ).success(fn=stt.transcribe_and_add_to_chat, inputs=[audio_to_transcribe, chat], outputs=[chat], show_progress="hidden")
 
-        # TODO: find a way to remove delay
+        # TODO: find a way to remove a delay
         audio_input.stop_recording(fn=lambda: time.sleep(2)).success(
-            fn=add_candidate_message, inputs=[message, chat], outputs=[chat]
-        ).success(
             fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
             outputs=[chat_history, chat, previous_code, audio_output],
-        ).success(
-            fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
-        ).success(
-            lambda: "", outputs=[message]
-        )
+        ).success(fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer])
 
         interview_type_select.change(
             fn=lambda x: gr.update(choices=topic_lists[x], value=np.random.choice(topic_lists[x])),
