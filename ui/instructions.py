@@ -33,7 +33,7 @@ This section is where the interaction happens:
 - **Code/Solution Area**: On the left side, you will find a space to write your solution. For codding problem you can use any language, although syntax highlighting is only available for Python and SQL.
 - **Communication Area**: On the right, this area includes:
   - **Chat History**: Displays the entire dialogue history, showing messages from both you and the AI interviewer. Your recognized speech will be shown here before being sent to the AI.
-  - **Audio Record Button**: Use this button to record your responses. Press to start recording, speak your thoughts, and press stop to send your audio. Your message will be sent to the chat, along with a snapshot of your code or any notes from solution text area."
+  - **Audio Record Button**: Use this button to record your responses. Press to start recording, speak your thoughts, and press stop to send your audio. Wait until everything you said is transcribed and then click stop. Your message will be sent to the chat, along with a snapshot of your code or any notes from solution text area."
 
 Engage with the AI as you would with a real interviewer. Provide concise responses and frequent updates rather than long monologues. Your interactions, including any commentary on your code, will be recorded and the AI's responses will be read aloud and displayed in the chat. Follow the AI's instructions and respond to any follow-up questions as they arise.
 

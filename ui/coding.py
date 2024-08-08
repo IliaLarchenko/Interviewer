@@ -251,21 +251,53 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
             fn=llm.end_interview, inputs=[description, chat_history, interview_type_select], outputs=[feedback]
         )
 
-        # TODO: add a counter for audio chunks to use for better delay handling
-        audio_counter = 0
+        is_recording = gr.State(False)
+        audio_input.start_recording(fn=lambda: True, outputs=[is_recording])
+
+        hidden_text = gr.State("")
+        is_transcribing = gr.State(False)
         audio_input.stream(
             stt.process_audio_chunk,
             inputs=[audio_input, audio_buffer],
             outputs=[audio_buffer, audio_to_transcribe],
             show_progress="hidden",
-        ).success(fn=stt.transcribe_and_add_to_chat, inputs=[audio_to_transcribe, chat], outputs=[chat], show_progress="hidden")
+        ).success(fn=lambda: True, outputs=[is_transcribing]).success(
+            fn=stt.transcribe_audio, inputs=[audio_to_transcribe, hidden_text], outputs=[hidden_text], show_progress="full"
+        ).success(
+            fn=stt.add_to_chat, inputs=[hidden_text, chat, is_recording], outputs=[chat], show_progress="full"
+        ).success(
+            fn=lambda: False, outputs=[is_transcribing]
+        )
 
-        # TODO: find a way to remove a delay
-        audio_input.stop_recording(fn=lambda: time.sleep(2)).success(
+        # Ugly but works, need to clean up the code and find a better way to handle the logic
+        # Main problem - we need to wait until the last chunk of audio is transcribed before sending the request
+        # The same time I don't want to have a fixed delay by default
+        # I didn't find a native way of gradio to handle this, so I used a workaround
+        # There should be a better way to handle this, but I didn't find it yet
+        # The solution below keeps waiting 0.5 second up to 8 times until the audio is transcribed
+        audio_input.stop_recording(fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]).success(
+            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
+        ).success(fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]).success(
+            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
+        ).success(
+            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
+        ).success(
+            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
+        ).success(
+            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
+        ).success(
+            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
+        ).success(
+            fn=lambda: False, outputs=[is_recording]
+        ).success(
             fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
             outputs=[chat_history, chat, previous_code, audio_output],
-        ).success(fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer])
+        ).success(
+            fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
+        ).success(
+            fn=lambda: "", outputs=[hidden_text]
+        )
 
         interview_type_select.change(
             fn=lambda x: gr.update(choices=topic_lists[x], value=np.random.choice(topic_lists[x])),
