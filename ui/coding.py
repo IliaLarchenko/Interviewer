@@ -160,6 +160,7 @@ def get_problem_solving_ui(
             gr.Markdown(DEMO_MESSAGE)
         chat_history = gr.State([])
         previous_code = gr.State("")
+        start_time = gr.State(None)
         hi_markdown = gr.Markdown(
             "<h2 style='text-align: center;'> Hi! I'm here to guide you through a practice session for your technical interview. Choose the interview settings to begin.</h2>\n"
         )
@@ -242,12 +243,25 @@ def get_problem_solving_ui(
                     audio_to_transcribe = gr.State(np.array([], dtype=np.int16))
 
         with gr.Accordion("Feedback", open=True, visible=False) as feedback_acc:
+            interview_time = gr.Markdown()
             feedback = gr.Markdown(elem_id=f"feedback", line_breaks=True)
 
         # Event handlers
-        start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).success(
-            fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
-        ).success(
+        def start_timer():
+            return time.time()
+
+        def get_duration_string(start_time):
+            if start_time is None:
+                duration_str = ""
+            else:
+                duration = int(time.time() - start_time)
+                minutes, seconds = divmod(duration, 60)
+                duration_str = f"Interview duration: {minutes} minutes, {seconds} seconds"
+            return duration_str
+
+        start_btn.click(fn=start_timer, outputs=[start_time]).success(
+            fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]
+        ).success(fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]).success(
             fn=lambda: (
                 gr.update(visible=False),
                 gr.update(interactive=False),
@@ -288,6 +302,8 @@ def get_problem_solving_ui(
             outputs=[feedback_acc],
         ).success(
             fn=llm.end_interview, inputs=[description, chat_history, interview_type_select], outputs=[feedback]
+        ).success(
+            fn=get_duration_string, inputs=[start_time], outputs=[interview_time]
         )
 
         hidden_text = gr.State("")
