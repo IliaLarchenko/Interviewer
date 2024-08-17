@@ -1,16 +1,19 @@
 import gradio as gr
 import numpy as np
 import os
-
-from itertools import chain
 import time
+from itertools import chain
+from typing import List, Dict, Generator, Optional, Tuple, Any
+from functools import partial
 
 from resources.data import fixed_messages, topic_lists, interview_types
 from utils.ui import add_candidate_message, add_interviewer_message
-from typing import List, Dict, Generator, Optional, Tuple
-from functools import partial
 from api.llm import LLMManager
 from api.audio import TTSManager, STTManager
+
+DEMO_MESSAGE: str = """<span style="color: red;"> 
+This service is running in demo mode with limited performance (e.g. slow voice recognition). For a better experience, run the service locally, refer to the Instruction tab for more details.
+</span>"""
 
 
 def send_request(
@@ -23,9 +26,23 @@ def send_request(
     silent: Optional[bool] = False,
 ) -> Generator[Tuple[List[Dict[str, str]], List[List[Optional[str]]], str, bytes], None, None]:
     """
-    Send a request to the LLM and update the chat display and translate it to speech.
+    Send a request to the LLM and process the response.
+
+    Args:
+        code (str): Current code.
+        previous_code (str): Previous code.
+        chat_history (List[Dict[str, str]]): Current chat history.
+        chat_display (List[List[Optional[str]]]): Current chat display.
+        llm (LLMManager): LLM manager instance.
+        tts (Optional[TTSManager]): TTS manager instance.
+        silent (Optional[bool]): Whether to silence audio output. Defaults to False.
+
+    Yields:
+        Tuple[List[Dict[str, str]], List[List[Optional[str]]], str, bytes]: Updated chat history, chat display, code, and audio chunk.
     """
+
     # TODO: Find the way to simplify it and remove duplication in logic
+
     if silent is None:
         silent = os.getenv("SILENT", False)
 
@@ -93,7 +110,16 @@ def send_request(
         yield chat_history, chat_display, code, b""
 
 
-def change_code_area(interview_type):
+def change_code_area(interview_type: str) -> gr.update:
+    """
+    Update the code area based on the interview type.
+
+    Args:
+        interview_type (str): Type of interview.
+
+    Returns:
+        gr.update: Gradio update object for the code area.
+    """
     if interview_type == "coding":
         return gr.update(
             label="Please write your code here. You can use any language, but only Python syntax highlighting is available.",
@@ -111,12 +137,22 @@ def change_code_area(interview_type):
         )
 
 
-DEMO_MESSAGE = """<span style="color: red;"> 
-This service is running in demo mode with limited performance (e.g. slow voice recognition). For a better experience, run the service locally, refer to the Instruction tab for more details.
-</span>"""
+def get_problem_solving_ui(
+    llm: LLMManager, tts: TTSManager, stt: STTManager, default_audio_params: Dict[str, Any], audio_output: gr.Audio
+) -> gr.Tab:
+    """
+    Create the problem-solving UI for the interview application.
 
+    Args:
+        llm (LLMManager): LLM manager instance.
+        tts (TTSManager): TTS manager instance.
+        stt (STTManager): STT manager instance.
+        default_audio_params (Dict[str, Any]): Default audio parameters.
+        audio_output (gr.Audio): Gradio audio output component.
 
-def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, default_audio_params: Dict, audio_output):
+    Returns:
+        gr.Tab: Gradio tab containing the problem-solving UI.
+    """
     send_request_partial = partial(send_request, llm=llm, tts=tts)
 
     with gr.Tab("Interview", render=False, elem_id=f"tab") as problem_tab:
@@ -127,6 +163,8 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
         hi_markdown = gr.Markdown(
             "<h2 style='text-align: center;'> Hi! I'm here to guide you through a practice session for your technical interview. Choose the interview settings to begin.</h2>\n"
         )
+
+        # UI components for interview settings
         with gr.Row() as init_acc:
             with gr.Column(scale=3):
                 interview_type_select = gr.Dropdown(
@@ -183,6 +221,7 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
                         )
                 start_btn = gr.Button("Generate a problem", elem_id=f"start_btn", interactive=not os.getenv("IS_DEMO", False))
 
+        # Problem statement and solution components
         with gr.Accordion("Problem statement", open=True, visible=False) as problem_acc:
             description = gr.Markdown(elem_id=f"problem_description", line_breaks=True)
         with gr.Accordion("Solution", open=True, visible=False) as solution_acc:
@@ -205,7 +244,7 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
         with gr.Accordion("Feedback", open=True, visible=False) as feedback_acc:
             feedback = gr.Markdown(elem_id=f"feedback", line_breaks=True)
 
-        # Start button click action chain
+        # Event handlers
         start_btn.click(fn=add_interviewer_message(fixed_messages["start"]), inputs=[chat], outputs=[chat]).success(
             fn=tts.read_last_message, inputs=[chat], outputs=[audio_output]
         ).success(
@@ -251,53 +290,37 @@ def get_problem_solving_ui(llm: LLMManager, tts: TTSManager, stt: STTManager, de
             fn=llm.end_interview, inputs=[description, chat_history, interview_type_select], outputs=[feedback]
         )
 
-        is_recording = gr.State(False)
-        audio_input.start_recording(fn=lambda: True, outputs=[is_recording])
-
         hidden_text = gr.State("")
         is_transcribing = gr.State(False)
+
         audio_input.stream(
             stt.process_audio_chunk,
             inputs=[audio_input, audio_buffer],
             outputs=[audio_buffer, audio_to_transcribe],
             show_progress="hidden",
         ).success(fn=lambda: True, outputs=[is_transcribing]).success(
-            fn=stt.transcribe_audio, inputs=[audio_to_transcribe, hidden_text], outputs=[hidden_text], show_progress="full"
+            fn=stt.transcribe_audio, inputs=[audio_to_transcribe, hidden_text], outputs=[hidden_text], show_progress="hidden"
         ).success(
-            fn=stt.add_to_chat, inputs=[hidden_text, chat, is_recording], outputs=[chat], show_progress="full"
+            fn=stt.add_to_chat, inputs=[hidden_text, chat], outputs=[chat], show_progress="hidden"
         ).success(
             fn=lambda: False, outputs=[is_transcribing]
         )
 
-        # Ugly but works, need to clean up the code and find a better way to handle the logic
-        # Main problem - we need to wait until the last chunk of audio is transcribed before sending the request
-        # The same time I don't want to have a fixed delay by default
-        # I didn't find a native way of gradio to handle this, so I used a workaround
-        # There should be a better way to handle this, but I didn't find it yet
-        # The solution below keeps waiting 0.5 second up to 8 times until the audio is transcribed
-        audio_input.stop_recording(fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]).success(
-            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
-        ).success(fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]).success(
-            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
-        ).success(
-            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
-        ).success(
-            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
-        ).success(
-            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
-        ).success(
-            fn=lambda x: time.sleep(int(x) / 2), inputs=[is_transcribing]
-        ).success(
-            fn=lambda: False, outputs=[is_recording]
-        ).success(
+        # We need to wait until the last chunk of audio is transcribed before sending the request
+        # I didn't find a native way of gradio to handle this, and used a workaround
+        WAIT_TIME = 5
+        TIME_STEP = 0.1
+        STEPS = int(WAIT_TIME / TIME_STEP)
+
+        stop_audio_recording = audio_input.stop_recording(fn=lambda x: time.sleep(TIME_STEP) if x else None, inputs=[is_transcribing])
+        for _ in range(STEPS - 1):
+            stop_audio_recording = stop_audio_recording.success(fn=lambda x: time.sleep(TIME_STEP) if x else None, inputs=[is_transcribing])
+
+        stop_audio_recording.success(
             fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
             outputs=[chat_history, chat, previous_code, audio_output],
-        ).success(
-            fn=lambda: np.array([], dtype=np.int16), outputs=[audio_buffer]
-        ).success(
-            fn=lambda: "", outputs=[hidden_text]
-        )
+        ).then(fn=lambda: (np.array([], dtype=np.int16), "", False), outputs=[audio_buffer, hidden_text, is_transcribing])
 
         interview_type_select.change(
             fn=lambda x: gr.update(choices=topic_lists[x], value=np.random.choice(topic_lists[x])),
