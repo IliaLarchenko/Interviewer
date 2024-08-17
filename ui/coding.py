@@ -312,15 +312,17 @@ def get_problem_solving_ui(
         TIME_STEP = 0.1
         STEPS = int(WAIT_TIME / TIME_STEP)
 
-        stop_audio_recording = audio_input.stop_recording(fn=lambda x: time.sleep(TIME_STEP) if x else None, inputs=[is_transcribing])
-        for _ in range(STEPS - 1):
+        stop_audio_recording = audio_input.stop_recording(fn=lambda: gr.update(visible=False), outputs=[audio_input])
+        for _ in range(STEPS):
             stop_audio_recording = stop_audio_recording.success(fn=lambda x: time.sleep(TIME_STEP) if x else None, inputs=[is_transcribing])
 
         stop_audio_recording.success(
             fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
             outputs=[chat_history, chat, previous_code, audio_output],
-        ).then(fn=lambda: (np.array([], dtype=np.int16), "", False), outputs=[audio_buffer, hidden_text, is_transcribing])
+        ).then(fn=lambda: (np.array([], dtype=np.int16), "", False), outputs=[audio_buffer, hidden_text, is_transcribing]).then(
+            fn=lambda: gr.update(visible=True), outputs=[audio_input]
+        )
 
         interview_type_select.change(
             fn=lambda x: gr.update(choices=topic_lists[x], value=np.random.choice(topic_lists[x])),
