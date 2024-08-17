@@ -279,6 +279,8 @@ class LLMManager:
             List[Dict[str, str]]: Updated chat history.
         """
         message = chat_display[-1][0]
+        if not message:
+            message = ""
         if code != previous_code:
             message += "\nMY NOTES AND CODE:\n" + code
         chat_history.append({"role": "user", "content": message})
