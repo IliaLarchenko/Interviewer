@@ -2,17 +2,30 @@ import os
 from openai import OpenAI
 import anthropic
 from utils.errors import APIError
-from typing import List, Dict, Generator, Optional, Tuple
+from typing import List, Dict, Generator, Optional, Tuple, Any
+import logging
 
 
 class PromptManager:
     def __init__(self, prompts: Dict[str, str]):
-        self.prompts = prompts
-        self.limit = os.getenv("DEMO_WORD_LIMIT")
+        """
+        Initialize the PromptManager.
+
+        Args:
+            prompts (Dict[str, str]): A dictionary of prompt keys and their corresponding text.
+        """
+        self.prompts: Dict[str, str] = prompts
+        self.limit: Optional[str] = os.getenv("DEMO_WORD_LIMIT")
 
     def add_limit(self, prompt: str) -> str:
         """
         Add word limit to the prompt if specified in the environment variables.
+
+        Args:
+            prompt (str): The original prompt.
+
+        Returns:
+            str: The prompt with added word limit if applicable.
         """
         if self.limit:
             prompt += f" Keep your responses very short and simple, no more than {self.limit} words."
@@ -21,6 +34,15 @@ class PromptManager:
     def get_system_prompt(self, key: str) -> str:
         """
         Retrieve and limit a system prompt by its key.
+
+        Args:
+            key (str): The key for the desired prompt.
+
+        Returns:
+            str: The retrieved prompt with added word limit if applicable.
+
+        Raises:
+            KeyError: If the key is not found in the prompts dictionary.
         """
         prompt = self.prompts[key]
         return self.add_limit(prompt)
@@ -30,13 +52,29 @@ class PromptManager:
     ) -> str:
         """
         Create a problem requirements prompt with optional parameters.
+
+        Args:
+            type (str): The type of problem.
+            difficulty (Optional[str]): The difficulty level of the problem.
+            topic (Optional[str]): The topic of the problem.
+            requirements (Optional[str]): Additional requirements for the problem.
+
+        Returns:
+            str: The constructed problem requirements prompt.
         """
         prompt = f"Create a {type} problem. Difficulty: {difficulty}. Topic: {topic}. Additional requirements: {requirements}."
         return self.add_limit(prompt)
 
 
 class LLMManager:
-    def __init__(self, config, prompts: Dict[str, str]):
+    def __init__(self, config: Any, prompts: Dict[str, str]):
+        """
+        Initialize the LLMManager.
+
+        Args:
+            config (Any): Configuration object containing LLM settings.
+            prompts (Dict[str, str]): A dictionary of prompts for the PromptManager.
+        """
         self.config = config
         self.llm_type = config.llm.type
         if self.llm_type == "ANTHROPIC_API":
@@ -53,18 +91,38 @@ class LLMManager:
     def get_text(self, messages: List[Dict[str, str]], stream: Optional[bool] = None) -> Generator[str, None, None]:
         """
         Generate text from the LLM, optionally streaming the response.
+
+        Args:
+            messages (List[Dict[str, str]]): List of message dictionaries.
+            stream (Optional[bool]): Whether to stream the response. Defaults to self.streaming if not provided.
+
+        Yields:
+            str: Generated text chunks.
+
+        Raises:
+            APIError: If an unexpected error occurs during text generation.
         """
         if stream is None:
             stream = self.streaming
         try:
             if self.llm_type == "OPENAI_API":
-                return self._get_text_openai(messages, stream)
+                yield from self._get_text_openai(messages, stream)
             elif self.llm_type == "ANTHROPIC_API":
-                return self._get_text_anthropic(messages, stream)
+                yield from self._get_text_anthropic(messages, stream)
         except Exception as e:
             raise APIError(f"LLM Get Text Error: Unexpected error: {e}")
 
     def _get_text_openai(self, messages: List[Dict[str, str]], stream: bool) -> Generator[str, None, None]:
+        """
+        Generate text using OpenAI API.
+
+        Args:
+            messages (List[Dict[str, str]]): List of message dictionaries.
+            stream (bool): Whether to stream the response.
+
+        Yields:
+            str: Generated text chunks.
+        """
         if not stream:
             response = self.client.chat.completions.create(model=self.config.llm.name, messages=messages, temperature=1, max_tokens=2000)
             yield response.choices[0].message.content.strip()
@@ -77,9 +135,39 @@ class LLMManager:
                     yield chunk.choices[0].delta.content
 
     def _get_text_anthropic(self, messages: List[Dict[str, str]], stream: bool) -> Generator[str, None, None]:
-        # I convert the messages every time to the Anthropics format
-        # It is not optimal way to do it, we can instead support the messages format from the beginning
-        # But it duplicates the code and I don't want to do it now
+        """
+        Generate text using Anthropic API.
+
+        Args:
+            messages (List[Dict[str, str]]): List of message dictionaries.
+            stream (bool): Whether to stream the response.
+
+        Yields:
+            str: Generated text chunks.
+        """
+        system_message, consolidated_messages = self._prepare_anthropic_messages(messages)
+
+        if not stream:
+            response = self.client.messages.create(
+                model=self.config.llm.name, max_tokens=2000, temperature=1, system=system_message, messages=consolidated_messages
+            )
+            yield response.content[0].text
+        else:
+            with self.client.messages.stream(
+                model=self.config.llm.name, max_tokens=2000, temperature=1, system=system_message, messages=consolidated_messages
+            ) as stream:
+                yield from stream.text_stream
+
+    def _prepare_anthropic_messages(self, messages: List[Dict[str, str]]) -> Tuple[Optional[str], List[Dict[str, str]]]:
+        """
+        Prepare messages for Anthropic API format.
+
+        Args:
+            messages (List[Dict[str, str]]): Original messages in OpenAI format.
+
+        Returns:
+            Tuple[Optional[str], List[Dict[str, str]]]: Tuple containing system message and consolidated messages.
+        """
         system_message = None
         consolidated_messages = []
 
@@ -95,39 +183,43 @@ class LLMManager:
                 else:
                     consolidated_messages.append(message.copy())
 
-        if not stream:
-            response = self.client.messages.create(
-                model=self.config.llm.name, max_tokens=2000, temperature=1, system=system_message, messages=consolidated_messages
-            )
-            yield response.content[0].text
-        else:
-            with self.client.messages.stream(
-                model=self.config.llm.name, max_tokens=2000, temperature=1, system=system_message, messages=consolidated_messages
-            ) as stream:
-                yield from stream.text_stream
+        return system_message, consolidated_messages
 
-    def test_llm(self, stream=False) -> bool:
+    def test_llm(self, stream: bool = False) -> bool:
         """
         Test the LLM connection with or without streaming.
+
+        Args:
+            stream (bool): Whether to test streaming functionality.
+
+        Returns:
+            bool: True if the test is successful, False otherwise.
         """
         try:
-            list(
-                self.get_text(
-                    [
-                        {"role": "system", "content": "You just help me test the connection."},
-                        {"role": "user", "content": "Hi!"},
-                        {"role": "user", "content": "Ping!"},
-                    ],
-                    stream=stream,
-                )
-            )
+            test_messages = [
+                {"role": "system", "content": "You just help me test the connection."},
+                {"role": "user", "content": "Hi!"},
+                {"role": "user", "content": "Ping!"},
+            ]
+            list(self.get_text(test_messages, stream=stream))
             return True
-        except:
+        except APIError as e:
+            logging.error(f"LLM test failed: {e}")
+            return False
+        except Exception as e:
+            logging.error(f"Unexpected error during LLM test: {e}")
             return False
 
     def init_bot(self, problem: str, interview_type: str = "coding") -> List[Dict[str, str]]:
         """
         Initialize the bot with a system prompt and problem description.
+
+        Args:
+            problem (str): The problem description.
+            interview_type (str): The type of interview. Defaults to "coding".
+
+        Returns:
+            List[Dict[str, str]]: Initial messages for the bot.
         """
         system_prompt = self.prompt_manager.get_system_prompt(f"{interview_type}_interviewer_prompt")
         return [{"role": "system", "content": f"{system_prompt}\nThe candidate is solving the following problem:\n {problem}"}]
@@ -135,6 +227,15 @@ class LLMManager:
     def get_problem_prepare_messages(self, requirements: str, difficulty: str, topic: str, interview_type: str) -> List[Dict[str, str]]:
         """
         Prepare messages for generating a problem based on given requirements.
+
+        Args:
+            requirements (str): Specific requirements for the problem.
+            difficulty (str): Difficulty level of the problem.
+            topic (str): Topic of the problem.
+            interview_type (str): Type of interview.
+
+        Returns:
+            List[Dict[str, str]]: Prepared messages for problem generation.
         """
         system_prompt = self.prompt_manager.get_system_prompt(f"{interview_type}_problem_generation_prompt")
         full_prompt = self.prompt_manager.get_problem_requirements_prompt(interview_type, difficulty, topic, requirements)
@@ -146,6 +247,15 @@ class LLMManager:
     def get_problem(self, requirements: str, difficulty: str, topic: str, interview_type: str) -> Generator[str, None, None]:
         """
         Get a problem from the LLM based on the given requirements, difficulty, and topic.
+
+        Args:
+            requirements (str): Specific requirements for the problem.
+            difficulty (str): Difficulty level of the problem.
+            topic (str): Topic of the problem.
+            interview_type (str): Type of interview.
+
+        Yields:
+            str: Incrementally generated problem statement.
         """
         messages = self.get_problem_prepare_messages(requirements, difficulty, topic, interview_type)
         problem = ""
@@ -158,6 +268,15 @@ class LLMManager:
     ) -> List[Dict[str, str]]:
         """
         Update chat history with the latest user message and code.
+
+        Args:
+            code (str): Current code.
+            previous_code (str): Previous code.
+            chat_history (List[Dict[str, str]]): Current chat history.
+            chat_display (List[List[Optional[str]]]): Current chat display.
+
+        Returns:
+            List[Dict[str, str]]: Updated chat history.
         """
         message = chat_display[-1][0]
         if code != previous_code:
@@ -170,6 +289,14 @@ class LLMManager:
     ) -> List[Dict[str, str]]:
         """
         Prepare messages to end the interview and generate feedback.
+
+        Args:
+            problem_description (str): The original problem description.
+            chat_history (List[Dict[str, str]]): The chat history.
+            interview_type (str): The type of interview.
+
+        Returns:
+            List[Dict[str, str]]: Prepared messages for generating feedback.
         """
         transcript = [f"{message['role'].capitalize()}: {message['content']}" for message in chat_history[1:]]
         system_prompt = self.prompt_manager.get_system_prompt(f"{interview_type}_grading_feedback_prompt")
@@ -185,6 +312,14 @@ class LLMManager:
     ) -> Generator[str, None, None]:
         """
         End the interview and get feedback from the LLM.
+
+        Args:
+            problem_description (str): The original problem description.
+            chat_history (List[Dict[str, str]]): The chat history.
+            interview_type (str): The type of interview. Defaults to "coding".
+
+        Yields:
+            str: Incrementally generated feedback.
         """
         if len(chat_history) <= 2:
             yield "No interview history available"
