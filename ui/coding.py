@@ -297,19 +297,18 @@ def get_problem_solving_ui(
             stt.process_audio_chunk,
             inputs=[audio_input, audio_buffer],
             outputs=[audio_buffer, audio_to_transcribe],
-            show_progress="hidden",
         ).success(fn=lambda: True, outputs=[is_transcribing]).success(
-            fn=stt.transcribe_audio, inputs=[audio_to_transcribe, hidden_text], outputs=[hidden_text], show_progress="hidden"
+            fn=stt.transcribe_audio, inputs=[audio_to_transcribe, hidden_text], outputs=[hidden_text]
         ).success(
-            fn=stt.add_to_chat, inputs=[hidden_text, chat], outputs=[chat], show_progress="hidden"
+            fn=stt.add_to_chat, inputs=[hidden_text, chat], outputs=[chat]
         ).success(
             fn=lambda: False, outputs=[is_transcribing]
         )
 
         # We need to wait until the last chunk of audio is transcribed before sending the request
         # I didn't find a native way of gradio to handle this, and used a workaround
-        WAIT_TIME = 5
-        TIME_STEP = 0.1
+        WAIT_TIME = 3
+        TIME_STEP = 0.3
         STEPS = int(WAIT_TIME / TIME_STEP)
 
         stop_audio_recording = audio_input.stop_recording(fn=lambda: gr.update(visible=False), outputs=[audio_input])
@@ -320,6 +319,7 @@ def get_problem_solving_ui(
             fn=send_request_partial,
             inputs=[code, previous_code, chat_history, chat],
             outputs=[chat_history, chat, previous_code, audio_output],
+            show_progress="full",
         ).then(fn=lambda: (np.array([], dtype=np.int16), "", False), outputs=[audio_buffer, hidden_text, is_transcribing]).then(
             fn=lambda: gr.update(visible=True), outputs=[audio_input]
         )

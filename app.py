@@ -62,7 +62,6 @@ def main():
     """
     config, llm, tts, stt = initialize_services()
     demo = create_interface(llm, tts, stt, default_audio_params)
-    demo.config["dependencies"][0]["show_progress"] = "hidden"
 
     # Launch the Gradio interface
     demo.launch(show_api=False)
