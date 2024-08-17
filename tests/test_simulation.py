@@ -38,7 +38,7 @@ def complete_and_grade_interview(interview_type: str, mode: str = "normal") -> D
     return {"interview_type": interview_type, "mode": mode, "score": score}
 
 
-def test_complete_interview() -> None:
+def test_simulate_interview() -> None:
     """
     Test the complete interview process for various interview types, including edge cases.
     Runs interviews concurrently using a thread pool and checks the average score.
