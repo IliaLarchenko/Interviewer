@@ -53,8 +53,13 @@ def complete_interview(
     topic = topic or random.choice(topic_lists[interview_type])
     difficulty = difficulty or random.choice(["easy", "medium", "hard"])
 
-    for problem_statement_text in llm.get_problem(requirements, difficulty, topic, interview_type):
-        pass
+    # Fix: Iterate over all elements and keep the last one
+    problem_statement_text = None
+    for text in llm.get_problem(requirements, difficulty, topic, interview_type):
+        problem_statement_text = text
+
+    if problem_statement_text is None:
+        raise ValueError("Failed to get problem statement")
 
     interview_data = defaultdict(
         lambda: None,
@@ -98,19 +103,27 @@ def complete_interview(
         elif mode == "repeat":
             candidate_message = chat_display[-1][1]
         else:
-            response = client.chat.completions.create(
-                model=model, messages=messages_candidate, temperature=1, response_format={"type": "json_object"}, stream=False
-            )
             try:
-                response_json = json.loads(response.choices[0].message.content)
-                candidate_message = response_json.get("message", "")
-                code = response_json.get("code_and_notes", "")
-                finished = response_json.get("finished", False)
-                question = response_json.get("question", False)
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages_candidate,
+                    temperature=1,
+                    response_format={"type": "json_object"},
+                    timeout=30,  # Add a timeout to prevent indefinite waiting
+                )
+                try:
+                    response_json = json.loads(response.choices[0].message.content)
+                    candidate_message = response_json.get("message", "")
+                    code = response_json.get("code_and_notes", "")
+                    finished = response_json.get("finished", False)
+                    question = response_json.get("question", False)
 
-                if finished and not question and not code:
-                    break
-            except:
+                    if finished and not question and not code:
+                        break
+                except:
+                    continue
+            except Exception as e:
+                print(f"Error in API call: {str(e)}, skipping this iteration")
                 continue
 
         if not candidate_message and not code and mode != "empty":
@@ -127,10 +140,17 @@ def complete_interview(
         chat_display.append([candidate_message, None])
 
         send_time = time.time()
-        for messages_interviewer, chat_display, previous_code, _ in send_request(
-            code, previous_code, messages_interviewer, chat_display, llm, tts=None, silent=True
-        ):
-            pass
+
+        # Fix: Iterate over all elements and keep the last one
+        last_result = None
+        for result in send_request(code, previous_code, messages_interviewer, chat_display, llm, tts=None, silent=True):
+            last_result = result
+
+        if last_result is not None:
+            messages_interviewer, chat_display, previous_code, _ = last_result
+        else:
+            print("send_request did not return any results, skipping this iteration")
+            continue
 
         response_times.append(time.time() - send_time)
 
@@ -144,8 +164,12 @@ def complete_interview(
 
         time.sleep(pause)  # to prevent exceeding rate limits
 
+    # Fix: Iterate over all elements and keep the last one
+    feedback = None
     for fb in llm.end_interview(problem_statement_text, messages_interviewer, interview_type):
-        interview_data["feedback"] = fb
+        feedback = fb
+
+    interview_data["feedback"] = feedback
 
     interview_data["average_response_time_seconds"] = round(sum(response_times) / len(response_times), 2) if response_times else 0
 
