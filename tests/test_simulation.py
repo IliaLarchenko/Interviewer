@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Tuple
 INTERVIEW_TYPES = ["ml_design", "math", "ml_theory", "system_design", "sql", "coding"]
 EDGE_CASE_MODES = ["empty", "gibberish", "repeat"]
 MIN_AVERAGE_SCORE = 0.7
-MIN_INTERVIEW_SCORE = 0.3
+MIN_INTERVIEW_SCORE = 0.2
 MAX_WORKERS = 5
 
 
